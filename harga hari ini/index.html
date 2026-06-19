@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Pantes Gold & Jewelry — Daftar Harga</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     TOPBAR CONTROL
+══════════════════════════════════════ -->
+<div class="ctrl-bar">
+  <div class="ctrl-inner">
+
+    <div class="ctrl-cokim" id="cokimBar"></div>
+
+    <div class="ctrl-clock">
+      <span class="ctrl-time" id="clock">--:--:--</span>
+      <span class="ctrl-date" id="date">-- / -- / ----</span>
+    </div>
+
+    <div class="ctrl-right">
+      <div class="slide-dots" id="slideDots">
+        <button class="dot active" data-slide="0" title="Slide 1 — Harga Terima"></button>
+        <button class="dot"        data-slide="1" title="Slide 2 — Harga Emas"></button>
+        <button class="dot"        data-slide="2" title="Slide 3 — LM Antam"></button>
+        <button class="dot"        data-slide="3" title="Slide 4 — LM UBS &amp; Lotus"></button>
+      </div>
+      <div class="status-badge">
+        <span class="sdot" id="statusDot"></span>
+        <span id="statusText">Memuat…</span>
+      </div>
+      <div class="ctrl-btns">
+        <button class="cb" id="btnPrev">&#9664;</button>
+        <button class="cb cb-pause" id="btnPause">&#9646;&#9646;</button>
+        <button class="cb" id="btnNext">&#9654;</button>
+      </div>
+      <button class="btn-refresh" id="btnRefresh">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+
+  </div>
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDESHOW VIEWPORT
+══════════════════════════════════════ -->
+<div class="sw" id="slideshowWrap">
+
+  <!-- ════════════════════════════
+       SLIDE 0 — TERIMA EMAS
+  ════════════════════════════ -->
+  <div class="slide active" id="slide0">
+    <div class="s1-bg">
+
+      <!-- ─ HEADER: Pantes | Judul | Trimas ─ -->
+      <div class="slide-header">
+        <div class="sh-brand">
+          <img src="assets/pantes_logo.png" class="brand-logo-img" alt="Pantes Logo"/>
+          <div class="brand-text">
+            <span class="brand-name">PANTES</span>
+            <span class="brand-sub">Gold &amp; Jewelry</span>
+          </div>
+        </div>
+        <div class="sh-center">
+          <span class="sh-title">TERIMA EMAS<br>HARGA TINGGI<sup>*</sup></span>
+        </div>
+        <div class="sh-trimas">
+          <img src="assets/trimas_putih.png" class="trimas-logo-img" alt="Trimas"/>
+        </div>
+      </div>
+
+      <!-- ─ Date bar ─ -->
+      <div class="datebar">
+        <span class="datebar-label">HARGA HARI INI</span>
+        <span class="datebar-date" id="hhiDate">--/--/----</span>
+      </div>
+
+      <!-- ─ Price grid ─ -->
+      <div class="s1-grid" id="daftar1Grid"></div>
+
+    </div>
+  </div><!-- /slide0 -->
+
+  <!-- ════════════════════════════
+       SLIDE 1 — HARGA EMAS
+  ════════════════════════════ -->
+  <div class="slide" id="slide1">
+    <div class="s2-bg">
+
+      <!-- ─ HEADER ─ -->
+      <div class="slide-header slide-header--dark">
+        <div class="sh-brand">
+          <img src="assets/pantes_logo.png" class="brand-logo-img" alt="Pantes Logo"/>
+          <div class="brand-text">
+            <span class="brand-name">PANTES</span>
+            <span class="brand-sub">Gold &amp; Jewelry</span>
+          </div>
+        </div>
+        <div class="sh-center">
+          <span class="sh-title">HARGA EMAS PERHIASAN</span>
+        </div>
+        <div class="sh-trimas">
+          <img src="assets/trimas_putih.png" class="trimas-logo-img" alt="Trimas"/>
+        </div>
+      </div>
+
+      <!-- ─ Full-width solid table ─ -->
+      <div class="s2-table-wrap">
+        <table class="s2-table" id="tableHargaEmas">
+          <thead>
+            <tr>
+              <th class="th-gold">KADAR</th>
+              <th class="th-dark">HARGA JUAL</th>
+              <th class="th-dark">HARGA TERIMA</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyHargaEmas">
+            <tr><td colspan="3" class="td-load">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div><!-- /slide1 -->
+
+  <!-- ════════════════════════════
+       SLIDE 2 — LM ANTAM
+  ════════════════════════════ -->
+  <div class="slide" id="slide2">
+    <div class="s3-bg">
+
+      <!-- ─ HEADER ─ -->
+      <div class="slide-header slide-header--gold">
+        <div class="sh-brand">
+          <img src="assets/pantes_logo.png" class="brand-logo-img brand-logo-img--gold" alt="Pantes Logo"/>
+          <div class="brand-text brand-text--dark">
+            <span class="brand-name brand-name--dark">PANTES</span>
+            <span class="brand-sub brand-sub--dark">Gold &amp; Jewelry</span>
+          </div>
+        </div>
+        <div class="sh-center">
+          <span class="sh-title sh-title--dark">LM ANTAM CERTIEYE REDMARK</span>
+        </div>
+        <div class="sh-trimas">
+          <img src="assets/trimas_gold.png" class="trimas-logo-img" alt="Trimas"/>
+        </div>
+      </div>
+
+      <!-- ─ Table container ─ -->
+      <div class="s3-container">
+        <div class="s3-top-headers">
+          <div class="s3-gram-spacer"></div>
+          <div class="s3-hdr-2026">LM ANTAM CERTIEYE REDMARK (2026)</div>
+          <div class="s3-hdr-under">LM ANTAM CERTIEYE REDMARK (UNDER 2026)</div>
+        </div>
+        <div class="s3-subhdr">
+          <div class="s3-gram-cell th-gold">GRAM</div>
+          <div class="th-dark s3-col">HARGA JUAL</div>
+          <div class="th-dark s3-col">HARGA TERIMA</div>
+          <div class="th-dark-green s3-col">HARGA JUAL</div>
+          <div class="th-dark-green s3-col">HARGA TERIMA</div>
+        </div>
+        <div class="s3-body" id="s3Body"></div>
+      </div>
+
+    </div>
+  </div><!-- /slide2 -->
+
+  <!-- ════════════════════════════
+       SLIDE 3 — LM UBS + LOTUS
+  ════════════════════════════ -->
+  <div class="slide" id="slide3">
+    <div class="s4-bg">
+
+      <!-- ─ HEADER ─ -->
+      <div class="slide-header slide-header--dark">
+        <div class="sh-brand">
+          <img src="assets/pantes_logo.png" class="brand-logo-img" alt="Pantes Logo"/>
+          <div class="brand-text">
+            <span class="brand-name">PANTES</span>
+            <span class="brand-sub">Gold &amp; Jewelry</span>
+          </div>
+        </div>
+        <div class="sh-center">
+          <span class="sh-title">LOGAM MULIA — UBS &amp; LOTUS ARCHI</span>
+        </div>
+        <div class="sh-trimas">
+          <img src="assets/trimas_putih.png" class="trimas-logo-img" alt="Trimas"/>
+        </div>
+      </div>
+
+      <!-- ─ Table container ─ -->
+      <div class="s4-container">
+        <div class="s4-top-headers">
+          <div class="s4-hdr-ubs">LM UBS SNI (Baru)</div>
+          <div class="s4-hdr-lotus">LM LOTUS ARCHI</div>
+        </div>
+        <div class="s4-subhdr">
+          <div class="th-dark s4-col">GRAM</div>
+          <div class="th-dark s4-col">HARGA JUAL</div>
+          <div class="th-dark s4-col">HARGA TERIMA</div>
+          <div class="th-dark s4-col">GRAM</div>
+          <div class="th-dark s4-col">HARGA JUAL</div>
+          <div class="th-dark s4-col">HARGA TERIMA</div>
+        </div>
+        <div class="s4-body" id="s4Body"></div>
+      </div>
+
+    </div>
+  </div><!-- /slide3 -->
+
+</div><!-- /sw -->
+
+<script src="script.js"></script>
+</body>
+</html>
