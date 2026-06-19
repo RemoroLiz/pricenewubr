@@ -127,10 +127,10 @@ const UBS = [
 const CONFIG = {
   SLIDE_DURATION:   15_000,    // ms antar slide (15 detik)
   REFRESH_INTERVAL: 30_000,    // ms auto-refresh data
-  DEMO_MODE: false,             // true = pakai data lokal, false = Google Sheets
+  DEMO_MODE: false,            // false = data live dari Google Sheets
 
-  /* Ganti dengan URL deployment Google Apps Script Anda */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbwaxp2y4M-R2PtBISFYtGEFx0hnWkJbszoktjqeUXQwGWuVvI8WXPZkyR6P48TVJ1Kf/exec',
+  /* URL deployment Google Apps Script (Pantes Gold & Jewelry) */
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwn4iqYy806N49oBLKyRORYtyK6EUHDOl2RLq-N7DWQ52_HwlLko4SRSdq2UpjcVlic/exec',
 
   /* Pemetaan sheet index (disesuaikan dengan urutan di Spreadsheet) */
   SHEETS: {
