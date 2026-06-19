@@ -118,7 +118,7 @@ const CONFIG = {
      membuat URL /exec baru. Selalu cek URL terbaru di:
      Deploy > Manage Deployments > kolom "Web app" > salin URL itu
      ke baris GAS_URL di bawah ini. */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbzuN-9nogMjjaxuCZcuhRqRGh1GHuoiWgr5x2yayB31hQ-2P97dl2NOb6OIYw4XUeU9/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbyrUKkAB300kR7odx_8EYWWSc6FmJafBIDWtXGAUzP-mTF4S6jmE10o_uDkRlaLaWN0/exec',
   /* Pemetaan sheet index (disesuaikan dengan urutan di Spreadsheet) */
   SHEETS: {
     CONFIG:      'cokim',  // ?action=cokim
