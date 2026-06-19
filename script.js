@@ -113,8 +113,12 @@ const CONFIG = {
   SLIDE_DURATION:   15_000,    // ms antar slide (15 detik)
   REFRESH_INTERVAL: 30_000,    // ms auto-refresh data
   DEMO_MODE: false,            // false = data live dari Google Sheets
-  /* URL deployment Google Apps Script (Pantes Gold & Jewelry) */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbwn4iqYy806N49oBLKyRORYtyK6EUHDOl2RLq-N7DWQ52_HwlLko4SRSdq2UpjcVlic/exec',
+  /* URL deployment Google Apps Script (Pantes Gold & Jewelry)
+     PENTING: setiap kali Anda Deploy > New version, Apps Script BISA
+     membuat URL /exec baru. Selalu cek URL terbaru di:
+     Deploy > Manage Deployments > kolom "Web app" > salin URL itu
+     ke baris GAS_URL di bawah ini. */
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbzuN-9nogMjjaxuCZcuhRqRGh1GHuoiWgr5x2yayB31hQ-2P97dl2NOb6OIYw4XUeU9/exec',
   /* Pemetaan sheet index (disesuaikan dengan urutan di Spreadsheet) */
   SHEETS: {
     CONFIG:      'cokim',  // ?action=cokim
