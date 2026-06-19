@@ -1,13 +1,11 @@
 /* =========================================================
-   PANTES GOLD & JEWELRY — script.js  v5
-
+   PANTES GOLD & JEWELRY — script.js  v5.1 (FIXED)
    ╔══════════════════════════════════════════════════════╗
    ║        EDIT NILAI COKIM DI SINI (berlaku demo)      ║
    ║  COKIM 1 → patokan Harga Jual Emas Daftar 2         ║
    ║  COKIM 2 → patokan Harga Terima Daftar 1 (6K–18K)  ║
    ║  COKIM 3 → cadangan / referensi                     ║
    ╚══════════════════════════════════════════════════════╝ */
-
 /**
  * rp(n) — helper format Rupiah untuk data manual
  * ------------------------------------------------
@@ -20,19 +18,14 @@
  * Cara update data: cukup ubah angkanya, titik dan "Rp" muncul sendiri.
  */
 const rp = n => 'Rp ' + Number(n).toLocaleString('id-ID');
-
-
-
 const COKIM = {
   cokim1: 1_820_000,   // per gram — Daftar 2 Harga Emas jual
   cokim2: 1_800_000,   // per gram — Daftar 1 & Daftar 2 Harga Terima 6K–9K
   cokim3: 1_750_000,   // cadangan
 };
-
 /* ─── KONFIGURASI KADAR ────────────────────────────────
    DAFTAR 1 (harga terima / harga beli perhiasan):
      Rumus: cokim2 × pct  →  FLOOR ke 500
-
    DAFTAR 2 HARGA EMAS:
      Harga Jual   : cokim1 × pctHigh → CEILING ke 500
      Harga Terima :
@@ -40,7 +33,6 @@ const COKIM = {
                   = cokim2 × pct Daftar1 → FLOOR ke 500
        16K–18K  : cokim1 × pctLow  → FLOOR ke 500  – 19.500
 ─────────────────────────────────────────────────────── */
-
 /* Daftar 1 — satu persentase per kadar */
 const KADAR_D1 = [
   { kadar: '6K',  pct: 0.25 },
@@ -51,10 +43,8 @@ const KADAR_D1 = [
   { kadar: '17K', pct: 0.73 },
   { kadar: '18K', pct: 0.78 },
 ];
-
 /* Lookup table: kadar → pct Daftar 1 (dipakai untuk harga terima 6–9K di Daftar 2) */
 const D1_PCT = Object.fromEntries(KADAR_D1.map(k => [k.kadar, k.pct]));
-
 /* Daftar 2 — range persentase jual, dan apakah highKadar (16K+) */
 const KADAR_D2 = [
   { kadar: '6K',  pctLow: 0.335, pctHigh: 0.370, highKadar: false },
@@ -65,7 +55,6 @@ const KADAR_D2 = [
   { kadar: '17K', pctLow: 0.870, pctHigh: 0.870, highKadar: true  },
   { kadar: '18K', pctLow: 0.880, pctHigh: 0.880, highKadar: true  },
 ];
-
 /* ─── MANUAL: ANTAM 2026 ─────────────────────────────── */
 /* Tulis angka mentah — rp() otomatis tambah "Rp" dan pemisah titik */
 const ANTAM_2026 = [
@@ -78,7 +67,6 @@ const ANTAM_2026 = [
   { gram: '50',  jual: rp(92150000),   terima: rp(87250000)   },
   { gram: '100', jual: rp(184100000),  terima: rp(174400000)  },
 ];
-
 /* ─── MANUAL: ANTAM UNDER 2026 ──────────────────────── */
 const ANTAM_UNDER = [
   { gram: '0.5', jual: rp(940000),     terima: rp(815000)     },
@@ -90,7 +78,6 @@ const ANTAM_UNDER = [
   { gram: '50',  jual: rp(90700000),   terima: rp(85900000)   },
   { gram: '100', jual: rp(181200000),  terima: rp(166060000)  },
 ];
-
 /* ─── MANUAL: LOTUS ARCHI ───────────────────────────── */
 const LOTUS = [
   { gram: '0.5', jual: rp(940000),     terima: rp(815000)     },
@@ -102,7 +89,6 @@ const LOTUS = [
   { gram: '50',  jual: rp(90700000),   terima: rp(85900000)   },
   { gram: '100', jual: rp(181200000),  terima: rp(166060000)  },
 ];
-
 /* ─── MANUAL: UBS SNI (Baru) ────────────────────────── */
 const UBS = [
   { gram: '0.5', jual: rp(920000),     terima: rp(800000)     },
@@ -116,7 +102,6 @@ const UBS = [
   { gram: '50',  jual: rp(89600000),   terima: rp(84600000)   },
   { gram: '100', jual: rp(179000000),  terima: rp(169000000)  },
 ];
-
 /* ═══════════════════════════════════════════════════════
    CONFIG
    ─────────────────────────────────────────────────────
@@ -128,10 +113,8 @@ const CONFIG = {
   SLIDE_DURATION:   15_000,    // ms antar slide (15 detik)
   REFRESH_INTERVAL: 30_000,    // ms auto-refresh data
   DEMO_MODE: false,            // false = data live dari Google Sheets
-
   /* URL deployment Google Apps Script (Pantes Gold & Jewelry) */
   GAS_URL: 'https://script.google.com/macros/s/AKfycbwn4iqYy806N49oBLKyRORYtyK6EUHDOl2RLq-N7DWQ52_HwlLko4SRSdq2UpjcVlic/exec',
-
   /* Pemetaan sheet index (disesuaikan dengan urutan di Spreadsheet) */
   SHEETS: {
     CONFIG:      'cokim',  // ?action=cokim
@@ -145,16 +128,13 @@ const CONFIG = {
     UBS:         6,
   },
 };
-
 /* ═══════════════════════════════════════════════════════
    FORMULA ENGINE & FORMAT HELPERS
 ═══════════════════════════════════════════════════════ */
-
 const ceil500  = v => Math.ceil(v  / 500) * 500;
 const floor500 = v => Math.floor(v / 500) * 500;
 const fmtRp    = v => 'Rp ' + Math.round(v).toLocaleString('id-ID');
 const fmtRange = (lo, hi) => lo === hi ? fmtRp(lo) : `${fmtRp(lo)} – ${fmtRp(hi)}`;
-
 /**
  * parseKadarD1(rows) — konversi baris JSON dari Sheets ke format KADAR_D1
  * Kolom Spreadsheet: kadar | pct
@@ -166,7 +146,6 @@ function parseKadarD1(rows) {
     pct:   parseFloat(r.pct),
   })).filter(r => r.kadar && !isNaN(r.pct));
 }
-
 /**
  * parseKadarD2(rows) — konversi baris JSON dari Sheets ke format KADAR_D2
  * Kolom Spreadsheet: kadar | pct_low | pct_high | high_kadar
@@ -183,7 +162,6 @@ function parseKadarD2(rows) {
     highKadar:  String(r.high_kadar).toUpperCase() === 'TRUE' || r.high_kadar === true || Number(r.high_kadar) === 1,
   })).filter(r => r.kadar && !isNaN(r.pctLow) && !isNaN(r.pctHigh));
 }
-
 /**
  * buildDaftar1(kadarList) — Harga Terima (harga beli perhiasan)
  * Rumus: cokim2 × pct → FLOOR ke 500
@@ -195,7 +173,6 @@ function buildDaftar1(kadarList) {
     harga: fmtRp(floor500(COKIM.cokim2 * pct)),
   }));
 }
-
 /**
  * buildHargaEmas(kadarList) — Harga Emas
  * Harga Jual  : cokim1 × pctHigh → CEILING ke 500
@@ -208,7 +185,6 @@ function buildHargaEmas(kadarList) {
   return (kadarList || KADAR_D2).map(({ kadar, pctLow, pctHigh, highKadar }) => {
     const jualLo = ceil500(COKIM.cokim1 * pctLow);
     const jualHi = ceil500(COKIM.cokim1 * pctHigh);
-
     let terimaStr;
     if (!highKadar) {
       // 6K–9K: harga terima = harga jual
@@ -219,7 +195,6 @@ function buildHargaEmas(kadarList) {
       const terHi = floor500(COKIM.cokim1 * pctHigh) - 19500;
       terimaStr = fmtRange(terLo, terHi);
     }
-
     return {
       kadar,
       harga_jual:   fmtRange(jualLo, jualHi),
@@ -228,27 +203,22 @@ function buildHargaEmas(kadarList) {
     };
   });
 }
-
 /* ═══════════════════════════════════════════════════════
    CLOCK
 ═══════════════════════════════════════════════════════ */
 const pad = n => String(n).padStart(2, '0');
-
 function updateClock() {
   const now   = new Date();
   const hms   = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   const dmy   = `${pad(now.getDate())} / ${pad(now.getMonth()+1)} / ${now.getFullYear()}`;
   const short = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
-
   document.getElementById('clock').textContent = hms;
   document.getElementById('date').textContent  = dmy;
-
   const hd = document.getElementById('hhiDate');
   if (hd) hd.textContent = short;
 }
 setInterval(updateClock, 1000);
 updateClock();
-
 /* ═══════════════════════════════════════════════════════
    STATUS
 ═══════════════════════════════════════════════════════ */
@@ -256,7 +226,6 @@ function setStatus(state, text) {
   document.getElementById('statusDot').className    = 'sdot ' + state;
   document.getElementById('statusText').textContent = text;
 }
-
 /* ═══════════════════════════════════════════════════════
    COKIM BAR
 ═══════════════════════════════════════════════════════ */
@@ -270,7 +239,6 @@ function renderCokimBar() {
     `<span class="ck-sep">·</span>` +
     `<span class="ck-label">C3</span><span class="ck-val">${fmtRp(COKIM.cokim3)}</span>`;
 }
-
 /* ═══════════════════════════════════════════════════════
    SLIDESHOW ENGINE
 ═══════════════════════════════════════════════════════ */
@@ -278,36 +246,28 @@ const slides      = Array.from(document.querySelectorAll('.slide'));
 const dots        = Array.from(document.querySelectorAll('.dot'));
 const progressBar = document.getElementById('progressBar');
 const TOTAL       = slides.length;
-
 let currentIdx  = 0;
 let paused      = false;
 let progressRAF = null;
 let progStart   = null;
-
 function goTo(idx, dir = 'next') {
   if (idx === currentIdx) return;
   const prev = currentIdx;
   currentIdx = ((idx % TOTAL) + TOTAL) % TOTAL;
-
   slides[prev].classList.remove('active');
   slides[prev].classList.add(dir === 'next' ? 'exit-left' : 'exit-right');
   setTimeout(() => slides[prev].classList.remove('exit-left', 'exit-right'), 700);
-
   slides[currentIdx].classList.add('active');
   dots.forEach((d, i) => d.classList.toggle('active', i === currentIdx));
-
   if (!paused) startProgress();
 }
-
 const nextSlide = () => goTo(currentIdx + 1, 'next');
 const prevSlide = () => goTo(currentIdx - 1, 'prev');
-
 function startProgress() {
   cancelAnimationFrame(progressRAF);
   progressBar.style.transition = 'none';
   progressBar.style.width = '0%';
   progStart = performance.now();
-
   function tick(now) {
     const pct = Math.min(((now - progStart) / CONFIG.SLIDE_DURATION) * 100, 100);
     progressBar.style.width = pct + '%';
@@ -315,9 +275,7 @@ function startProgress() {
   }
   progressRAF = requestAnimationFrame(tick);
 }
-
 const stopProgress = () => cancelAnimationFrame(progressRAF);
-
 function togglePause() {
   paused = !paused;
   const btn = document.getElementById('btnPause');
@@ -331,7 +289,6 @@ function togglePause() {
     btn.title = 'Pause';
   }
 }
-
 /* Button listeners */
 document.getElementById('btnNext').addEventListener('click', () => {
   stopProgress(); nextSlide(); if (!paused) startProgress();
@@ -340,13 +297,11 @@ document.getElementById('btnPrev').addEventListener('click', () => {
   stopProgress(); prevSlide(); if (!paused) startProgress();
 });
 document.getElementById('btnPause').addEventListener('click', togglePause);
-
 dots.forEach((dot, i) => dot.addEventListener('click', () => {
   stopProgress();
   goTo(i, i > currentIdx ? 'next' : 'prev');
   if (!paused) startProgress();
 }));
-
 document.addEventListener('keydown', e => {
   if (['ArrowRight', 'ArrowDown'].includes(e.key)) {
     stopProgress(); nextSlide(); if (!paused) startProgress();
@@ -356,7 +311,6 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === ' ') { e.preventDefault(); togglePause(); }
 });
-
 /* Swipe */
 let touchX = 0;
 const sw = document.getElementById('slideshowWrap');
@@ -369,23 +323,19 @@ sw.addEventListener('touchend', e => {
     if (!paused) startProgress();
   }
 });
-
 /* ═══════════════════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════════════════ */
 const nowStr = () => new Date().toLocaleTimeString('id-ID',
   { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
 function flash(el) {
   if (!el) return;
   el.classList.remove('flash');
   void el.offsetWidth;
   el.classList.add('flash');
 }
-
 const esc = s => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
 /* ═══════════════════════════════════════════════════════
    RENDER — SLIDE 0: DAFTAR 1 (price cells)
 ═══════════════════════════════════════════════════════ */
@@ -396,28 +346,23 @@ function renderDaftar1(rows) {
     grid.innerHTML = '<div style="grid-column:1/-1;color:#fff;text-align:center;padding:30px">Tidak ada data</div>';
     return;
   }
-
   /* Layout: index 0–3 = LEFT column (6K,7K,8K,9K), index 4+ = RIGHT column */
   const left  = rows.filter((_, i) => i < 4);
   const right = rows.filter((_, i) => i >= 4);
   while (right.length < 4) right.push(null); // pad to 4 rows
-
   grid.innerHTML = '';
   for (let r = 0; r < 4; r++) {
     const lRow = left[r]  || null;
     const rRow = right[r] || null;
-
     // Left cell
     if (lRow) grid.appendChild(makeS1Cell(lRow, r));
     else      grid.appendChild(makeEmptyCell());
-
     // Right cell
     if (rRow) grid.appendChild(makeS1Cell(rRow, r + 0.1));
     else      grid.appendChild(makeEmptyCell());
   }
   flash(grid);
 }
-
 function makeS1Cell(row, delay) {
   const cell = document.createElement('div');
   cell.className = 's1-cell';
@@ -433,13 +378,11 @@ function makeS1Cell(row, delay) {
     </div>`;
   return cell;
 }
-
 function makeEmptyCell() {
   const d = document.createElement('div');
   d.className = 's1-cell s1-cell-empty';
   return d;
 }
-
 /* ═══════════════════════════════════════════════════════
    RENDER — SLIDE 1: HARGA EMAS (full-width table)
 ═══════════════════════════════════════════════════════ */
@@ -454,12 +397,10 @@ function renderHargaEmas(rows) {
   rows.forEach((row, i) => {
     const tr = document.createElement('tr');
     tr.style.animationDelay = i * 0.04 + 's';
-
     const kadar = row.kadar || '—';
     const jual  = row.harga_jual   || '—';
     const terima= row.harga_terima || '—';
     const isRange = String(jual).includes('–') || String(terima).includes('–');
-
     [kadar, jual, terima].forEach(val => {
       const td = document.createElement('td');
       td.textContent = val;
@@ -470,7 +411,6 @@ function renderHargaEmas(rows) {
   });
   flash(tbody.closest('table'));
 }
-
 /* ═══════════════════════════════════════════════════════
    RENDER — SLIDE 2: LM ANTAM 2026 + UNDER 2026
 ═══════════════════════════════════════════════════════ */
@@ -495,7 +435,6 @@ function renderS3(antam2026, antamUnder) {
   }
   flash(body);
 }
-
 /* ═══════════════════════════════════════════════════════
    RENDER — SLIDE 3: LM UBS SNI + LM LOTUS ARCHI
 ═══════════════════════════════════════════════════════ */
@@ -521,10 +460,20 @@ function renderS4(ubs, lotus) {
   }
   flash(body);
 }
-
 /* ═══════════════════════════════════════════════════════
    LOAD ALL DATA
+   (FIXED: pakai Promise.allSettled supaya 1 sheet gagal
+    tidak menggagalkan semua data. Ada validasi status HTTP
+    dan pesan error yang ditampilkan di status bar.)
 ═══════════════════════════════════════════════════════ */
+async function fetchJSON(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status} dari ${url}`);
+  const data = await res.json();
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+
 async function loadAll() {
   setStatus('loading', 'Memuat data…');
   document.getElementById('btnRefresh').classList.add('spinning');
@@ -534,7 +483,6 @@ async function loadAll() {
 
     if (CONFIG.DEMO_MODE) {
       await new Promise(r => setTimeout(r, 280));
-
       // Demo: gunakan KADAR_D1 & KADAR_D2 lokal (konstanta di atas)
       d1 = buildDaftar1(KADAR_D1);
       d2 = buildHargaEmas(KADAR_D2);
@@ -542,51 +490,61 @@ async function loadAll() {
       d4 = ANTAM_UNDER;
       d5 = LOTUS;
       d6 = UBS;
-
     } else {
       /* ── Google Sheets via Apps Script ── */
       const url = CONFIG.GAS_URL;
 
-      // Ambil semua sekaligus — termasuk KADAR_D1 (sheet 7) & KADAR_D2 (sheet 8)
-      const [rCfg, r1, r2, r3, r4, r5, r6, r7, r8] = await Promise.all([
-        fetch(`${url}?action=cokim`, { cache: 'no-store' }), // CONFIG cokim
-        fetch(`${url}?sheet=1`,      { cache: 'no-store' }), // ANTAM_2026
-        fetch(`${url}?sheet=2`,      { cache: 'no-store' }), // ANTAM_UNDER
-        fetch(`${url}?sheet=3`,      { cache: 'no-store' }), // LOTUS
-        fetch(`${url}?sheet=4`,      { cache: 'no-store' }), // UBS_SNI
-        fetch(`${url}?sheet=5`,      { cache: 'no-store' }), // (reserved)
-        fetch(`${url}?sheet=6`,      { cache: 'no-store' }), // (reserved)
-        fetch(`${url}?sheet=7`,      { cache: 'no-store' }), // KADAR_D1
-        fetch(`${url}?sheet=8`,      { cache: 'no-store' }), // KADAR_D2
+      // Promise.allSettled: kalau salah satu request gagal,
+      // request lain tetap diproses (tidak ikut gagal semua)
+      const results = await Promise.allSettled([
+        fetchJSON(`${url}?action=cokim`), // 0 → cokim
+        fetchJSON(`${url}?sheet=1`),       // 1 → ANTAM_2026
+        fetchJSON(`${url}?sheet=2`),       // 2 → ANTAM_UNDER
+        fetchJSON(`${url}?sheet=3`),       // 3 → LOTUS
+        fetchJSON(`${url}?sheet=4`),       // 4 → UBS_SNI
+        fetchJSON(`${url}?sheet=7`),       // 5 → KADAR_D1
+        fetchJSON(`${url}?sheet=8`),       // 6 → KADAR_D2
       ]);
 
-      // Update COKIM dari sheet CONFIG
-      const cfg = await rCfg.json();
+      const errors = [];
+      const val = (i, fallback) => {
+        if (results[i].status === 'fulfilled') return results[i].value;
+        errors.push((results[i].reason && results[i].reason.message) || `Gagal mengambil data #${i}`);
+        return fallback;
+      };
+
+      const cfg    = val(0, {});
+      const raw1   = val(1, []); // ANTAM_2026
+      const raw2   = val(2, []); // ANTAM_UNDER
+      const raw3   = val(3, []); // LOTUS
+      const raw4   = val(4, []); // UBS_SNI
+      const rawKD1 = val(5, []); // KADAR_D1
+      const rawKD2 = val(6, []); // KADAR_D2
+
+      // Update COKIM dari sheet CONFIG (jika berhasil)
       if (cfg && cfg.cokim1 != null) {
         COKIM.cokim1 = Number(cfg.cokim1) || COKIM.cokim1;
         COKIM.cokim2 = Number(cfg.cokim2) || COKIM.cokim2;
         COKIM.cokim3 = Number(cfg.cokim3) || COKIM.cokim3;
       }
 
-      // Parse data LM (sudah berformat string siap render)
-      const [raw1, raw2, raw3, raw4, , , rawKD1, rawKD2] = await Promise.all([
-        r1.json(), r2.json(), r3.json(), r4.json(),
-        r5.json(), r6.json(), r7.json(), r8.json(),
-      ]);
-
-      // Parse KADAR_D1 & KADAR_D2 dari Sheets, fallback ke konstanta lokal jika kosong
-      const sheetKD1 = rawKD1 && rawKD1.length ? parseKadarD1(rawKD1) : KADAR_D1;
-      const sheetKD2 = rawKD2 && rawKD2.length ? parseKadarD2(rawKD2) : KADAR_D2;
+      // Parse KADAR_D1 & KADAR_D2 dari Sheets, fallback ke konstanta lokal jika kosong/gagal
+      const sheetKD1 = Array.isArray(rawKD1) && rawKD1.length ? parseKadarD1(rawKD1) : KADAR_D1;
+      const sheetKD2 = Array.isArray(rawKD2) && rawKD2.length ? parseKadarD2(rawKD2) : KADAR_D2;
 
       // Hitung harga dari COKIM + KADAR yang sudah di-update dari Sheets
       d1 = buildDaftar1(sheetKD1);
       d2 = buildHargaEmas(sheetKD2);
 
-      // Data LM sudah berformat dari Sheets (pakai kolom harga_jual / harga_terima)
-      d3 = raw1;  // ANTAM_2026
-      d4 = raw2;  // ANTAM_UNDER
-      d5 = raw3;  // LOTUS
-      d6 = raw4;  // UBS_SNI
+      // Data LM: pakai data Sheets jika berhasil & berupa array, kalau tidak pakai fallback lokal
+      d3 = Array.isArray(raw1) ? raw1 : ANTAM_2026;
+      d4 = Array.isArray(raw2) ? raw2 : ANTAM_UNDER;
+      d5 = Array.isArray(raw3) ? raw3 : LOTUS;
+      d6 = Array.isArray(raw4) ? raw4 : UBS;
+
+      if (errors.length) {
+        console.warn('Sebagian data gagal dimuat dari Sheets:', errors);
+      }
     }
 
     renderCokimBar();
@@ -594,19 +552,15 @@ async function loadAll() {
     renderHargaEmas(d2);
     renderS3(d3, d4);
     renderS4(d6, d5);
-
     setStatus('online', CONFIG.DEMO_MODE ? 'Demo Mode' : 'Online');
-
   } catch (err) {
     console.error('loadAll error:', err);
-    setStatus('error', 'Gagal mengambil data');
+    setStatus('error', 'Gagal mengambil data: ' + err.message);
   } finally {
     document.getElementById('btnRefresh').classList.remove('spinning');
   }
 }
-
 document.getElementById('btnRefresh').addEventListener('click', loadAll);
-
 /* ═══════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════ */
