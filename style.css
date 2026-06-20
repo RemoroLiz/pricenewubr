@@ -197,7 +197,7 @@ html, body {
 
 /* Pantes triangle logo image */
 .brand-logo-img {
-  height: clamp(68px, 11.5vh, 108px); /* big, matches text cap-height */
+  height: clamp(120px, 11.5vh, 108px); /* big, matches text cap-height */
   width: auto;
   flex-shrink: 0;
   mix-blend-mode: screen;          /* black bg → transparent */
@@ -262,7 +262,7 @@ html, body {
   display: flex; align-items: center;
 }
 .trimas-logo-img {
-  height: clamp(60px, 10.5vh, 98px); /* matches brand logo height */
+  height: clamp(120px, 10.5vh, 98px); /* matches brand logo height */
   width: auto;
   mix-blend-mode: screen;
   filter: brightness(1.3) contrast(1.05);
@@ -273,7 +273,7 @@ html, body {
 ═══════════════════════════════════════════ */
 .s1-bg {
   width: 100%; height: 100%;
-  background: url('assets/bg_slide1.jpeg') center/cover no-repeat;
+  background: url('assets/bg_slide1.png') center/cover no-repeat;
   display: flex; flex-direction: column;
 }
 
@@ -345,7 +345,7 @@ html, body {
 ═══════════════════════════════════════════ */
 .s2-bg {
   width: 100%; height: 100%;
-  background: url('assets/bg_slide3.jpeg') center/cover no-repeat;
+  background: url('assets/bg_slide3.png') center/cover no-repeat;
   display: flex; flex-direction: column;
 }
 
@@ -400,7 +400,7 @@ html, body {
 ═══════════════════════════════════════════ */
 .s3-bg {
   width: 100%; height: 100%;
-  background: url('assets/bg_slide4.jpeg') center/cover no-repeat;
+  background: url('assets/bg_slide4.png') center/cover no-repeat;
   display: flex; flex-direction: column;
 }
 
@@ -482,7 +482,7 @@ html, body {
 ═══════════════════════════════════════════ */
 .s4-bg {
   width: 100%; height: 100%;
-  background: url('assets/bg_slide5.jpeg') center/cover no-repeat;
+  background: url('assets/bg_slide5.png') center/cover no-repeat;
   display: flex; flex-direction: column;
 }
 
