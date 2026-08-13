@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Pantes Gold & Jewelry — Digital Signage Price Board</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     TOPBAR CONTROL
+══════════════════════════════════════ -->
+<div class="ctrl-bar">
+  <div class="ctrl-inner">
+
+    <div class="ctrl-cokim" id="cokimBar"></div>
+
+    <div class="ctrl-clock">
+      <span class="ctrl-time" id="clock">--:--:--</span>
+      <span class="ctrl-date" id="date">-- / -- / ----</span>
+    </div>
+
+    <div class="ctrl-right">
+      <div class="slide-dots" id="slideDots"></div>
+      <div class="status-badge">
+        <span class="sdot" id="statusDot"></span>
+        <span id="statusText">Memuat…</span>
+      </div>
+      <div class="ctrl-btns">
+        <button class="cb" id="btnPrev">&#9664;</button>
+        <button class="cb cb-pause" id="btnPause">&#9646;&#9646;</button>
+        <button class="cb" id="btnNext">&#9654;</button>
+      </div>
+      <button class="btn-refresh" id="btnRefresh" title="Muat ulang data dari Spreadsheet">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+
+  </div>
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN LAYOUT: TABEL HARGA (kiri) + VIDEO (kanan)
+     Panel video berjalan independen dari slideshow tabel.
+══════════════════════════════════════ -->
+<div class="main-layout">
+  <div class="sw" id="slideshowWrap">
+    <!-- Slide-slide tabel harga dibuat otomatis oleh script.js
+         berdasarkan data dari Spreadsheet (1 sheet = 1 page,
+         maksimal 10 baris per slide). -->
+  </div>
+
+  <aside class="video-panel" id="videoPanel">
+    <!-- Video promo autoplay + loop dari Google Drive (sheet VIDEO).
+         Dikelola sepenuhnya oleh script.js, tidak reset saat
+         slideshow tabel berganti. -->
+  </aside>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
