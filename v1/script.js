@@ -24,7 +24,7 @@ const CONFIG = {
   /* URL deployment Google Apps Script (Web App /exec).
      PENTING: setiap kali Deploy > New version, Apps Script BISA
      membuat URL /exec baru — selalu perbarui baris ini. */
-  GAS_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_URL_DEPLOYMENT_ANDA/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbx4uI9bbs6DK44xxSvnmMTgyguXRa-LDZBmTcA8cmLMqkt1B_45Lr4tiY-jOGgLC5fm/exec',
 };
 
 /* Urutan & judul page (harus selaras dengan SHEET_PAGES di Code.gs) */
