@@ -24,7 +24,7 @@ const CONFIG = {
   /* URL deployment Google Apps Script (Web App /exec).
      PENTING: setiap kali Deploy > New version, Apps Script BISA
      membuat URL /exec baru — selalu perbarui baris ini. */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbx4uI9bbs6DK44xxSvnmMTgyguXRa-LDZBmTcA8cmLMqkt1B_45Lr4tiY-jOGgLC5fm/exec',
+  GAS_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_URL_DEPLOYMENT_ANDA/exec',
 };
 
 /* Urutan & judul page (harus selaras dengan SHEET_PAGES di Code.gs) */
@@ -100,9 +100,11 @@ function chunk(arr, size) {
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
 }
-/** Validasi ketat Google Drive file ID (hanya alfanumerik/-/_ ) — pertahanan
+/** Validasi ketat ID media (Drive file ID / YouTube video ID) — pertahanan
     berlapis di sisi klien meski server (Code.gs) sudah memvalidasi juga. */
-const isValidDriveFileId = id => /^[a-zA-Z0-9_-]{10,}$/.test(String(id || ''));
+const isValidDriveFileId   = id => /^[a-zA-Z0-9_-]{10,}$/.test(String(id || ''));
+const isValidYoutubeId     = id => /^[a-zA-Z0-9_-]{11}$/.test(String(id || ''));
+const isValidMediaId = v => v.platform === 'youtube' ? isValidYoutubeId(v.fileId) : isValidDriveFileId(v.fileId);
 
 async function fetchJSON(url) {
   const res = await fetch(url, { cache: 'no-store' });
@@ -205,14 +207,22 @@ function renderTableSlide(slide, index) {
 const VideoPanel = (() => {
   let list = [];
   let idx = 0;
-  let videoEl = null;
-  let iframeEl = null;
+  let rotateTimer = null;
 
-  function driveStreamSrc(fileId) { return `https://drive.google.com/uc?export=download&id=${fileId}`; }
+  function driveStreamSrc(fileId)  { return `https://drive.google.com/uc?export=download&id=${fileId}`; }
   function drivePreviewSrc(fileId) { return `https://drive.google.com/file/d/${fileId}/preview`; }
+  function youtubeEmbedSrc(id, loopSingle) {
+    // autoplay=1 + mute=1 wajib agar autoplay diizinkan browser tanpa interaksi user.
+    // controls=0, modestbranding=1, rel=0, iv_load_policy=3 → tampilan bersih utk signage.
+    // loop=1&playlist=ID → trik resmi YouTube agar 1 video looping terus-menerus.
+    const base = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&modestbranding=1` +
+      `&rel=0&iv_load_policy=3&playsinline=1&fs=0&disablekb=1`;
+    return loopSingle ? `${base}&loop=1&playlist=${id}` : base;
+  }
 
   function mount(videos) {
-    list = (videos || []).filter(v => isValidDriveFileId(v.fileId));
+    stopRotate();
+    list = (videos || []).filter(v => v.platform && isValidMediaId(v));
     const panel = document.getElementById('videoPanel');
     if (!panel) return;
     if (!list.length) { panel.classList.add('empty'); panel.innerHTML = ''; return; }
@@ -222,14 +232,31 @@ const VideoPanel = (() => {
   }
 
   function playCurrent(panel) {
+    stopRotate();
     const v = list[idx];
     if (!v) return;
+
+    if (v.platform === 'youtube') {
+      panel.innerHTML = `
+        <div class="video-frame">
+          <iframe id="signageVideoFrame" src="${youtubeEmbedSrc(v.fileId, list.length <= 1)}"
+            allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-presentation"
+            referrerpolicy="no-referrer" frameborder="0"></iframe>
+          <div class="video-caption">${esc(v.judul)}</div>
+        </div>`;
+      // YouTube iframe tanpa IFrame API tidak mengirim event 'ended' ke halaman kita,
+      // jadi playlist multi-video dirotasi berdasarkan durasi (kolom F sheet VIDEO).
+      if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
+      return;
+    }
+
+    // platform === 'drive'
     panel.innerHTML = `
       <div class="video-frame">
         <video id="signageVideo" autoplay muted playsinline ${list.length <= 1 ? 'loop' : ''}></video>
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
-    videoEl = document.getElementById('signageVideo');
+    const videoEl = document.getElementById('signageVideo');
     const source = document.createElement('source');
     source.src = driveStreamSrc(v.fileId);
     source.type = 'video/mp4';
@@ -241,7 +268,7 @@ const VideoPanel = (() => {
   }
 
   function fallbackToIframe(panel, v) {
-    // Jika pemutaran langsung gagal (mis. file besar / izin berbeda),
+    // Jika pemutaran langsung Drive gagal (mis. file besar / izin berbeda),
     // gunakan Google Drive preview embed sebagai cadangan.
     panel.innerHTML = `
       <div class="video-frame">
@@ -250,8 +277,10 @@ const VideoPanel = (() => {
           referrerpolicy="no-referrer" frameborder="0"></iframe>
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
-    if (list.length > 1) setTimeout(next, 20_000); // durasi tampil fallback sebelum lanjut ke video berikutnya
+    if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
   }
+
+  function stopRotate() { if (rotateTimer) { clearTimeout(rotateTimer); rotateTimer = null; } }
 
   function next() {
     if (!list.length) return;
