@@ -1,0 +1,264 @@
+/* =========================================================
+   PANTES GOLD & JEWELRY — style.css  v6
+   ========================================================= */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --brown-dark:   #3b1f0a;
+  --brown-mid:    #5c2d0e;
+  --gold:         #c9991a;
+  --gold-light:   #e8b84b;
+  --gold-shine:   #f5d470;
+  --gold-btn:     #d4a017;
+  --gold-pale:    #fef8ee;
+  --red-lotus:    #c0242b;
+  --blue-ubs:     #1f4e9e;
+  --green-antam:  #1a7a3c;
+  --white:        #ffffff;
+  --text-dark:    #2c1a06;
+  --text-mid:     #5c3d12;
+  --font:         'Montserrat', 'Segoe UI', sans-serif;
+
+  --ctrl-h: 52px;
+  --sh-h:   72px;
+  --video-w: 26%;
+}
+
+html, body {
+  height: 100%; width: 100%;
+  font-family: var(--font);
+  background: #0a0500;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════ */
+.ctrl-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+  height: var(--ctrl-h);
+  background: linear-gradient(90deg, #1a0c02 0%, #2d1a06 50%, #1a0c02 100%);
+  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 2px 20px rgba(0,0,0,.7);
+  display: flex; flex-direction: column;
+}
+.ctrl-inner { flex: 1; display: flex; align-items: center; padding: 0 18px; gap: 10px; overflow: hidden; }
+
+.ctrl-cokim {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(0,0,0,.4);
+  border: 1px solid rgba(212,160,23,.28);
+  border-radius: 6px; padding: 3px 12px;
+  font-size: .64rem; white-space: nowrap; flex-shrink: 0;
+}
+.ck-label { font-weight: 800; color: var(--gold-light); font-size: .58rem; background: rgba(212,160,23,.15); padding: 1px 5px; border-radius: 3px; }
+.ck-val   { color: var(--gold-shine); font-weight: 600; font-size: .65rem; }
+.ck-sep   { color: rgba(212,160,23,.3); margin: 0 3px; }
+
+.ctrl-clock { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ctrl-time  { font-size: 1.5rem; font-weight: 800; color: var(--gold-shine); letter-spacing: 3px; line-height: 1; text-shadow: 0 0 20px rgba(212,160,23,.5); }
+.ctrl-date  { font-size: .58rem; color: var(--gold-light); letter-spacing: 2px; }
+
+.ctrl-right { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+
+.slide-dots { display: flex; gap: 5px; max-width: 180px; overflow-x: auto; }
+.dot {
+  width: 9px; height: 9px; border-radius: 50%; padding: 0; flex-shrink: 0;
+  background: rgba(212,160,23,.18); border: 2px solid rgba(212,160,23,.35);
+  cursor: pointer; transition: background .25s, transform .2s;
+}
+.dot.active { background: var(--gold-light); box-shadow: 0 0 9px var(--gold-light); transform: scale(1.3); }
+
+.status-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(0,0,0,.4); border: 1px solid rgba(200,150,30,.28);
+  border-radius: 20px; padding: 4px 12px; font-size: .6rem; color: var(--gold-shine);
+}
+.sdot { width: 7px; height: 7px; border-radius: 50%; background: #666; box-shadow: 0 0 4px #666; transition: background .4s, box-shadow .4s; }
+.sdot.online  { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+.sdot.loading { background: var(--gold-light); box-shadow: 0 0 8px var(--gold-light); animation: pulse .9s infinite; }
+.sdot.error   { background: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.ctrl-btns { display: flex; gap: 3px; }
+.cb {
+  background: rgba(212,160,23,.12); border: 1px solid rgba(212,160,23,.3);
+  border-radius: 4px; color: var(--gold-shine); font-size: .76rem; padding: 4px 9px; cursor: pointer;
+  transition: background .2s;
+}
+.cb:hover { background: rgba(212,160,23,.28); }
+.cb-pause { letter-spacing: -1px; min-width: 30px; }
+
+.btn-refresh {
+  display: flex; align-items: center; gap: 5px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none; border-radius: 5px; color: var(--brown-dark); font-weight: 800; font-size: .68rem;
+  padding: 6px 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.4); transition: transform .15s;
+}
+.btn-refresh:hover { transform: translateY(-1px); }
+.btn-refresh.spinning svg { animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.progress-track { height: 3px; background: rgba(212,160,23,.07); }
+.progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-shine)); box-shadow: 0 0 8px var(--gold-light); }
+
+/* ══════════════════════════════════════════
+   MAIN LAYOUT — tabel (kiri) + video (kanan)
+═══════════════════════════════════════════ */
+.main-layout {
+  position: fixed; top: var(--ctrl-h); left: 0; right: 0; bottom: 0;
+  display: flex;
+}
+
+.sw { position: relative; flex: 1 1 auto; overflow: hidden; min-width: 0; }
+
+/* ══════════════════════════════════════════
+   SLIDES (tabel harga — dibangun dinamis oleh JS)
+═══════════════════════════════════════════ */
+.slide {
+  position: absolute; inset: 0;
+  opacity: 0; pointer-events: none;
+  transform: translateX(60px);
+  transition: opacity .55s cubic-bezier(.4,0,.2,1), transform .55s cubic-bezier(.4,0,.2,1);
+}
+.slide.active     { opacity: 1; pointer-events: auto; transform: translateX(0); }
+.slide.exit-left  { opacity: 0; pointer-events: none; transform: translateX(-60px); }
+.slide.exit-right { opacity: 0; pointer-events: none; transform: translateX(60px); }
+
+.page-bg {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  background: radial-gradient(circle at 20% 0%, #241206 0%, #0a0500 70%);
+}
+
+/* Aksen warna per kategori halaman (variasi visual, latar tetap gelap) */
+.page-bg.accent-gold  .slide-header { background: linear-gradient(90deg, var(--brown-dark) 0%, var(--brown-mid) 45%, var(--brown-dark) 100%); border-bottom-color: var(--gold); }
+.page-bg.accent-brown .slide-header { background: linear-gradient(90deg, #241206 0%, var(--brown-dark) 45%, #241206 100%); border-bottom-color: var(--gold-light); }
+.page-bg.accent-green .slide-header { background: linear-gradient(90deg, #0e2415 0%, #164a26 45%, #0e2415 100%); border-bottom-color: var(--green-antam); }
+.page-bg.accent-red   .slide-header { background: linear-gradient(90deg, #2a0a0c 0%, #4a1216 45%, #2a0a0c 100%); border-bottom-color: var(--red-lotus); }
+.page-bg.accent-blue  .slide-header { background: linear-gradient(90deg, #0a1224 0%, #14264a 45%, #0a1224 100%); border-bottom-color: var(--blue-ubs); }
+
+.page-bg.accent-green .price-table thead th { background: var(--green-antam); }
+.page-bg.accent-red   .price-table thead th { background: var(--red-lotus); }
+.page-bg.accent-blue  .price-table thead th { background: var(--blue-ubs); }
+
+/* ══════════════════════════════════════════
+   SLIDE HEADER (logo kiri, judul tengah, logo kanan)
+═══════════════════════════════════════════ */
+.slide-header {
+  display: flex; align-items: center; justify-content: space-between;
+  height: var(--sh-h); flex-shrink: 0; padding: 0 22px; gap: 14px;
+  border-bottom: 3px solid var(--gold);
+  box-shadow: 0 3px 16px rgba(0,0,0,.5);
+  position: relative; overflow: hidden;
+}
+.sh-brand, .sh-trimas { display: flex; align-items: center; flex-shrink: 0; }
+.brand-logo-img  { height: clamp(38px, 7vh, 66px); width: auto; mix-blend-mode: screen; filter: brightness(1.2) saturate(1.1); }
+.trimas-logo-img { height: clamp(32px, 6vh, 56px); width: auto; mix-blend-mode: screen; filter: brightness(1.2); }
+.sh-center { flex: 1; text-align: center; overflow: hidden; }
+.sh-title {
+  color: var(--white); font-weight: 900; text-transform: uppercase;
+  letter-spacing: 1px; line-height: 1.15;
+  font-size: clamp(.85rem, 2vw, 1.5rem);
+  text-shadow: 1px 1px 6px rgba(0,0,0,.6);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ══════════════════════════════════════════
+   TABEL HARGA — generic, responsif, tidak terlalu besar
+═══════════════════════════════════════════ */
+.table-wrap {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: clamp(10px, 2vh, 26px) clamp(10px, 3vw, 40px);
+  overflow: hidden;
+}
+.price-table {
+  width: 100%; max-width: 980px;
+  border-collapse: collapse;
+  background: var(--white);
+  border-radius: 8px; overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  border: 2px solid var(--gold);
+}
+.price-table thead th {
+  background: var(--gold-btn); color: var(--brown-dark);
+  font-weight: 800; text-transform: uppercase; letter-spacing: .4px;
+  padding: clamp(8px, 1.4vh, 14px) 10px; text-align: center;
+  font-size: clamp(.66rem, 1.1vw, .85rem);
+  border-right: 1px solid rgba(255,255,255,.35);
+}
+.price-table thead th:last-child { border-right: none; }
+.price-table tbody tr { animation: rowFade .3s ease both; }
+.price-table tbody tr:nth-child(even) { background: var(--gold-pale); }
+.price-table tbody tr:hover { background: #fef0cc; }
+.price-table tbody td {
+  padding: clamp(7px, 1.3vh, 14px) 10px; text-align: center; font-weight: 700;
+  color: var(--text-dark); font-size: clamp(.72rem, 1.15vw, .95rem);
+  border-right: 1px solid rgba(212,160,23,.25); border-top: 1px solid rgba(212,160,23,.18);
+}
+.price-table tbody td:last-child { border-right: none; }
+.price-table tbody td:first-child {
+  font-weight: 900; color: var(--brown-dark); background: rgba(249,243,226,.7);
+  font-size: clamp(.74rem, 1.2vw, .98rem);
+}
+.td-empty { color: #bbb; font-style: italic; padding: 16px !important; }
+
+.empty-state {
+  display: flex; align-items: center; justify-content: center; height: 100%;
+  color: var(--gold-light); font-size: 1rem; text-align: center; padding: 20px;
+}
+
+/* ══════════════════════════════════════════
+   VIDEO PANEL — sisi kanan, autoplay & loop, independen
+═══════════════════════════════════════════ */
+.video-panel {
+  flex: 0 0 var(--video-w); max-width: var(--video-w);
+  background: #000; border-left: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.video-panel.empty { flex: 0 0 0; max-width: 0; border-left: none; }
+.video-frame { position: relative; width: 100%; height: 100%; }
+.video-frame video, .video-frame iframe {
+  width: 100%; height: 100%; object-fit: cover; display: block; border: none;
+}
+.video-caption {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 14px 16px 18px; text-align: center;
+  background: linear-gradient(0deg, rgba(0,0,0,.75) 0%, transparent 100%);
+  color: var(--gold-shine); font-weight: 700; font-size: clamp(.7rem, 1.4vw, .95rem);
+  letter-spacing: .5px; text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════ */
+@keyframes rowFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  :root { --video-w: 30%; }
+}
+@media (max-width: 1000px) {
+  .ctrl-cokim { display: none; }
+  :root { --video-w: 34%; }
+}
+@media (max-width: 820px) {
+  :root { --ctrl-h: 74px; --sh-h: 58px; --video-w: 100%; }
+  .ctrl-inner { flex-wrap: wrap; padding: 4px 10px; }
+  .ctrl-clock { order: -1; width: 100%; }
+  .ctrl-time  { font-size: 1.25rem; }
+  .main-layout { flex-direction: column; }
+  .video-panel { flex: 0 0 34vh; max-width: 100%; border-left: none; border-top: 2px solid var(--gold); order: -1; }
+  .sw { flex: 1 1 auto; }
+}
+@media (max-width: 560px) {
+  :root { --sh-h: 50px; }
+  .sh-title { font-size: clamp(.75rem, 3vw, 1.05rem); }
+  .brand-logo-img, .trimas-logo-img { height: clamp(28px, 6vh, 44px); }
+  .ctrl-right .status-badge { display: none; }
+  .price-table thead th, .price-table tbody td { padding: 6px 6px; }
+}
