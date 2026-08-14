@@ -1,0 +1,234 @@
+/* =========================================================
+   PANTES GOLD & JEWELRY — customer.css
+   Halaman berbagi harga ke customer: terang, hangat, mudah dibaca,
+   gaya "kartu katalog butik" — sengaja berbeda dari tema gelap TV
+   signage (index.html/style.css) karena konteks pemakaiannya beda:
+   dibaca santai oleh customer di HP/tablet, bukan dilihat sekilas
+   dari kejauhan seperti layar TV.
+   ========================================================= */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:        #2b160a;   /* teks utama — espresso brown */
+  --ink-soft:   #5c3d1f;
+  --gold:       #c9991a;
+  --gold-deep:  #a87a12;
+  --gold-shine: #f0c862;
+  --burgundy:   #7a2032;   /* aksen sekunder — beda dari gold, nuansa beludru perhiasan */
+  --burgundy-deep: #5c1826;
+  --paper:      #f7efdc;   /* dasar hangat seperti kertas katalog, bukan cream generik */
+  --paper-card: #fffdf8;
+  --line:       rgba(43,22,10,.12);
+  --green-antam:#1a7a3c;
+  --red-lotus:  #7a2032;
+  --blue-ubs:   #1f4e9e;
+  --font-body:  'Montserrat', 'Segoe UI', sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+html, body { min-height: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(201,153,26,.10) 0%, transparent 45%),
+    radial-gradient(circle at 100% 30%, rgba(122,32,50,.06) 0%, transparent 40%);
+  color: var(--ink);
+  padding-bottom: 96px; /* ruang untuk footer sticky */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+.cs-header {
+  background: linear-gradient(160deg, #241206 0%, #3b1f0a 55%, #241206 100%);
+  padding: 20px 18px 22px;
+  position: relative;
+  overflow: hidden;
+}
+.cs-header-top {
+  display: flex; align-items: center; gap: 14px;
+  max-width: 760px; margin: 0 auto;
+}
+.cs-logo { height: 46px; width: auto; flex-shrink: 0; mix-blend-mode: screen; filter: brightness(1.2); }
+.cs-logo-trimas { height: 38px; }
+.cs-heading { flex: 1; text-align: center; min-width: 0; }
+.cs-eyebrow {
+  font-size: .62rem; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold-shine); font-weight: 700; opacity: .85;
+}
+.cs-heading h1 {
+  font-family: var(--font-display); font-weight: 800; font-style: italic;
+  font-size: clamp(1.35rem, 5vw, 2.1rem); color: #fff; line-height: 1.15;
+  margin: 2px 0 3px; text-shadow: 0 2px 12px rgba(0,0,0,.4);
+}
+.cs-date {
+  font-size: .74rem; color: var(--gold-shine); letter-spacing: .3px;
+  text-transform: capitalize;
+}
+
+/* Signature element: garis "kilau emas" tipis di bawah header —
+   satu sentuhan gerak yang halus, sesuai identitas perhiasan. */
+.cs-shimmer {
+  height: 2px; margin-top: 16px; max-width: 760px; margin-left: auto; margin-right: auto;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 20%, var(--gold-shine) 50%, var(--gold) 80%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 5s ease-in-out infinite;
+  opacity: .8;
+}
+@keyframes shimmer { 0% { background-position: 0% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .cs-shimmer { animation: none; } }
+
+.cs-cokim {
+  display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 14px;
+}
+.cs-pill {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(240,200,98,.28);
+  border-radius: 20px; padding: 6px 16px; font-size: .74rem; color: #fdf3da;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.cs-pill b { color: var(--gold-shine); font-weight: 800; letter-spacing: .5px; font-size: .64rem; }
+
+/* ══════════════════════════════════════════
+   QUICK NAV — chip kategori, sticky
+═══════════════════════════════════════════ */
+.cs-quicknav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 10px 16px; background: rgba(247,239,220,.92); backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+.cs-quicknav::-webkit-scrollbar { display: none; }
+.cs-chip {
+  flex-shrink: 0; text-decoration: none;
+  font-size: .72rem; font-weight: 700; letter-spacing: .3px; white-space: nowrap;
+  padding: 7px 14px; border-radius: 18px; color: var(--ink);
+  background: var(--paper-card); border: 1px solid var(--line);
+  transition: transform .15s, box-shadow .15s;
+}
+.cs-chip:active { transform: scale(.96); }
+.cs-chip.accent-gold  { border-color: rgba(201,153,26,.5); }
+.cs-chip.accent-brown { border-color: rgba(92,61,31,.5); }
+.cs-chip.accent-green { border-color: rgba(26,122,60,.5); }
+.cs-chip.accent-red    { border-color: rgba(122,32,50,.5); }
+.cs-chip.accent-blue   { border-color: rgba(31,78,158,.5); }
+
+/* ══════════════════════════════════════════
+   MAIN — kartu tabel per kategori
+═══════════════════════════════════════════ */
+.cs-main { max-width: 760px; margin: 0 auto; padding: 20px 16px 12px; }
+.cs-loading, .cs-empty {
+  text-align: center; color: var(--ink-soft); padding: 40px 20px; font-size: .9rem;
+}
+
+.cs-card {
+  background: var(--paper-card);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 18px rgba(43,22,10,.06);
+  margin-bottom: 18px;
+  overflow: hidden;
+  scroll-margin-top: 64px; /* supaya tidak ketutupan quicknav saat di-jump */
+  border-top: 4px solid var(--gold);
+}
+.cs-card.accent-brown { border-top-color: var(--ink-soft); }
+.cs-card.accent-green { border-top-color: var(--green-antam); }
+.cs-card.accent-red   { border-top-color: var(--burgundy); }
+.cs-card.accent-blue  { border-top-color: var(--blue-ubs); }
+
+.cs-card-title {
+  font-family: var(--font-display); font-weight: 700; font-style: italic;
+  font-size: clamp(1rem, 3.4vw, 1.25rem); color: var(--ink);
+  padding: 16px 18px 12px; display: flex; align-items: center; gap: 8px;
+}
+.cs-card-title::before { content: '◆'; color: var(--gold); font-size: .7rem; }
+
+.cs-table-wrap { overflow-x: auto; }
+.cs-table { width: 100%; border-collapse: collapse; }
+.cs-table thead th {
+  background: rgba(201,153,26,.10);
+  color: var(--ink-soft); text-transform: uppercase; letter-spacing: .5px;
+  font-size: .66rem; font-weight: 800;
+  padding: 9px 14px; text-align: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.cs-table tbody td {
+  padding: 12px 14px; text-align: center; font-weight: 700; color: var(--ink);
+  font-size: clamp(.85rem, 3vw, .98rem);
+  border-bottom: 1px solid var(--line);
+}
+.cs-table tbody tr:last-child td { border-bottom: none; }
+.cs-table tbody tr:nth-child(even) { background: rgba(201,153,26,.045); }
+.cs-table tbody td:first-child {
+  font-weight: 800; color: var(--gold-deep); white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════
+   FOOTER — sticky, aksi utama
+═══════════════════════════════════════════ */
+.cs-footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: linear-gradient(0deg, #fffdf8 60%, rgba(255,253,248,.85));
+  border-top: 1px solid var(--line);
+  padding: 10px 16px 12px;
+  box-shadow: 0 -4px 16px rgba(43,22,10,.08);
+}
+.cs-updated { text-align: center; font-size: .66rem; color: var(--ink-soft); margin-bottom: 8px; }
+.cs-actions { display: flex; gap: 8px; max-width: 760px; margin: 0 auto; }
+.cs-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: 10px; padding: 11px 10px; font-size: .78rem; font-weight: 700;
+  cursor: pointer; transition: transform .15s, opacity .15s; font-family: var(--font-body);
+}
+.cs-btn:active { transform: scale(.97); }
+.cs-btn-ghost { background: rgba(43,22,10,.06); color: var(--ink); border: 1px solid var(--line); }
+.cs-btn-ghost:hover { background: rgba(43,22,10,.1); }
+.cs-btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  color: #2b1604; flex: 1.3;
+  box-shadow: 0 3px 12px rgba(201,153,26,.4);
+}
+.cs-brand-footer { text-align: center; font-size: .62rem; color: var(--ink-soft); opacity: .6; margin-top: 8px; }
+
+/* ══════════════════════════════════════════
+   TOAST (konfirmasi "link disalin", dst.)
+═══════════════════════════════════════════ */
+.cs-toast {
+  position: fixed; left: 50%; bottom: 100px; z-index: 100;
+  transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: #fdf3da; font-size: .78rem; font-weight: 600;
+  padding: 10px 18px; border-radius: 24px; box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  transition: opacity .25s, transform .25s; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
+}
+.cs-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (min-width: 640px) {
+  .cs-header-top { gap: 24px; }
+  .cs-logo { height: 58px; }
+  .cs-logo-trimas { height: 48px; }
+}
+@media (max-width: 420px) {
+  .cs-logo, .cs-logo-trimas { display: none; }
+  .cs-actions .cs-btn span { display: none; }
+}
+
+/* ══════════════════════════════════════════
+   PRINT — daftar harga bersih tanpa navigasi/tombol
+═══════════════════════════════════════════ */
+@media print {
+  body { background: #fff; padding-bottom: 0; }
+  .cs-quicknav, .cs-footer, .cs-toast, .cs-shimmer { display: none !important; }
+  .cs-header { background: #fff !important; color: #000; padding: 0 0 12px; }
+  .cs-heading h1, .cs-eyebrow, .cs-date { color: var(--ink) !important; text-shadow: none; }
+  .cs-logo, .cs-logo-trimas { filter: none; mix-blend-mode: normal; }
+  .cs-pill { border-color: var(--ink); color: var(--ink); background: #fff; }
+  .cs-pill b { color: var(--ink); }
+  .cs-card { box-shadow: none; border: 1px solid #000; break-inside: avoid; page-break-inside: avoid; }
+  .cs-main { padding: 12px 0; max-width: 100%; }
+}
