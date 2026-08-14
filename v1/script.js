@@ -18,7 +18,7 @@
    CONFIG
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
-  SLIDE_DURATION: 12_000,     // ms per slide tabel harga
+  SLIDE_DURATION: 8_000,      // ms per slide tabel harga
   ROWS_PER_PAGE:  10,         // maksimum baris per slide (wajib sesuai requirement)
   FETCH_TIMEOUT:  12_000,     // ms — batas waktu tunggu respons Apps Script sebelum dianggap gagal
   /* Paksa selalu pakai data contoh lokal walau GAS_URL sudah diisi benar.
@@ -28,7 +28,7 @@ const CONFIG = {
   /* URL deployment Google Apps Script (Web App /exec).
      PENTING: setiap kali Deploy > New version/deployment baru, Apps Script
      BISA membuat URL /exec baru — selalu perbarui baris ini setelahnya. */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbwPz8DC9YAMsS277zbtNcCGOIgKkRcNcem6DANomkqpqAF4vT0chlMT8XqvxAyzc6JU/exec',
+  GAS_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_URL_DEPLOYMENT_ANDA/exec',
 };
 
 /** Tentukan mode live/demo secara otomatis dari isi GAS_URL — ini mencegah
@@ -205,6 +205,30 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
+
+/* ═══════════════════════════════════════════════════════
+   SYNC TINGGI TOPBAR — mencegah konten (jam/tanggal/label
+   slide) terpotong. Tinggi .ctrl-bar sekarang otomatis
+   mengikuti isinya (CSS: min-height, bukan height tetap);
+   JS di sini hanya "memberitahu" area konten di bawahnya
+   (.main-layout) berapa tinggi sebenarnya lewat CSS var
+   --ctrl-h-actual, sehingga selalu pas di layar/device apapun.
+═══════════════════════════════════════════════════════ */
+const ctrlBar = document.getElementById('ctrlBar');
+function syncCtrlBarHeight() {
+  if (!ctrlBar) return;
+  document.documentElement.style.setProperty('--ctrl-h-actual', ctrlBar.offsetHeight + 'px');
+}
+if (ctrlBar) {
+  if (window.ResizeObserver) {
+    new ResizeObserver(syncCtrlBarHeight).observe(ctrlBar);
+  } else {
+    window.addEventListener('resize', syncCtrlBarHeight);
+  }
+  syncCtrlBarHeight();
+  // Ukur ulang setelah web font selesai dimuat (ukuran teks bisa berubah).
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncCtrlBarHeight);
+}
 
 function setStatus(state, text) {
   document.getElementById('statusDot').className = 'sdot ' + state;
