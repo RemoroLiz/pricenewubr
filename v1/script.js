@@ -28,7 +28,7 @@ const CONFIG = {
   /* URL deployment Google Apps Script (Web App /exec).
      PENTING: setiap kali Deploy > New version/deployment baru, Apps Script
      BISA membuat URL /exec baru — selalu perbarui baris ini setelahnya. */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbxul0JI_1V1lHSGhN5rdzxzY449sTTGHH6Lhd81k-WCSx96Vthff9tRtwB5msalUm1Z/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxJB3x1dCuSNHx1xFYnsoYWdmpNA5pWBOkaa0GTw6_40K8ZKCkLKasGpDuDIEGklo2E/exec',
 };
 
 /** Tentukan mode live/demo secara otomatis dari isi GAS_URL — ini mencegah
