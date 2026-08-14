@@ -20,12 +20,29 @@
 const CONFIG = {
   SLIDE_DURATION: 12_000,     // ms per slide tabel harga
   ROWS_PER_PAGE:  10,         // maksimum baris per slide (wajib sesuai requirement)
-  DEMO_MODE:      true,       // true = pakai data contoh lokal; false = ambil dari Google Sheets
+  FETCH_TIMEOUT:  12_000,     // ms — batas waktu tunggu respons Apps Script sebelum dianggap gagal
+  /* Paksa selalu pakai data contoh lokal walau GAS_URL sudah diisi benar.
+     Biarkan `false` untuk pemakaian normal — mode live/demo akan
+     TERDETEKSI OTOMATIS dari GAS_URL di bawah (tidak perlu diubah manual). */
+  FORCE_DEMO: false,
   /* URL deployment Google Apps Script (Web App /exec).
-     PENTING: setiap kali Deploy > New version, Apps Script BISA
-     membuat URL /exec baru — selalu perbarui baris ini. */
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbx8uAYYERDqVO-yoXLS2ogsEhVOu1NTzFTNMwSOwtphRQA3MnOgZVdy93ZMBoKBPdAh/exec',
+     PENTING: setiap kali Deploy > New version/deployment baru, Apps Script
+     BISA membuat URL /exec baru — selalu perbarui baris ini setelahnya. */
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxul0JI_1V1lHSGhN5rdzxzY449sTTGHH6Lhd81k-WCSx96Vthff9tRtwB5msalUm1Z/exec',
 };
+
+/** Tentukan mode live/demo secara otomatis dari isi GAS_URL — ini mencegah
+    kasus umum "URL sudah diganti tapi web masih Demo Mode" karena dulu
+    ada 2 pengaturan terpisah (URL & toggle) yang mudah lupa disinkronkan. */
+function resolveMode() {
+  if (CONFIG.FORCE_DEMO) return { mode: 'demo', reason: 'FORCE_DEMO aktif di CONFIG' };
+  const url = String(CONFIG.GAS_URL || '').trim();
+  const isPlaceholder = !url || url.includes('GANTI_DENGAN');
+  const looksValid = /^https:\/\/script\.google(usercontent)?\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(url);
+  if (isPlaceholder) return { mode: 'demo', reason: 'GAS_URL belum diisi (masih placeholder)' };
+  if (!looksValid)   return { mode: 'demo', reason: 'GAS_URL tidak sesuai format .../exec — cek kembali URL deployment' };
+  return { mode: 'live', reason: '' };
+}
 
 /* Urutan & judul page (harus selaras dengan SHEET_PAGES di Code.gs) */
 const PAGE_META = [
@@ -44,7 +61,9 @@ const COL_LABEL = { id: 'KADAR / GRAM', harga_terima: 'HARGA TERIMA', jual: 'HAR
 ═══════════════════════════════════════════════════════ */
 const DEMO_DATA = {
   cokim: { global: 1820000, trimas: 1800000 },
-  videos: [],
+  videos: [
+    { id: 'DEMO1', judul: 'Contoh Video Promo (Demo Mode)', platform: 'youtube', fileId: 'aqz-KE-bpKQ', urutan: 1, durasi: 30 },
+  ],
   pages: {
     NOTA_LUAR: [
       { id: '6K',  harga_terima: 450000 }, { id: '7K',  harga_terima: 450000 },
@@ -106,11 +125,39 @@ const isValidDriveFileId   = id => /^[a-zA-Z0-9_-]{10,}$/.test(String(id || ''))
 const isValidYoutubeId     = id => /^[a-zA-Z0-9_-]{11}$/.test(String(id || ''));
 const isValidMediaId = v => v.platform === 'youtube' ? isValidYoutubeId(v.fileId) : isValidDriveFileId(v.fileId);
 
-async function fetchJSON(url) {
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
+async function fetchJSON(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 12_000);
+  let res;
+  try {
+    res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Waktu tunggu habis (server tidak merespons). Cek koneksi internet TV/monitor.');
+    throw new Error('Tidak bisa terhubung ke server (' + err.message + '). Cek koneksi internet.');
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error(`Server merespons error HTTP ${res.status}`);
+
+  const raw = await res.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    // Respons bukan JSON — biasanya karena deployment butuh login (redirect ke halaman HTML).
+    throw new Error('Respons server bukan JSON. Pastikan deployment Apps Script diatur "Who has access: Anyone".');
+  }
   if (data && data.error) throw new Error(data.error);
+  return data;
+}
+
+/** Pastikan payload dari action=all punya bentuk yang diharapkan, supaya
+    kesalahan struktur data tidak menyebabkan layar putih tanpa penjelasan. */
+function validateAllPayload(data) {
+  if (!data || typeof data !== 'object') throw new Error('Data dari server kosong / tidak valid.');
+  if (!data.pages || typeof data.pages !== 'object') throw new Error('Field "pages" tidak ditemukan pada respons server.');
+  if (!Array.isArray(data.videos)) data.videos = [];
+  if (!data.cokim || typeof data.cokim !== 'object') data.cokim = { global: null, trimas: null };
   return data;
 }
 
@@ -240,8 +287,8 @@ const VideoPanel = (() => {
       panel.innerHTML = `
         <div class="video-frame">
           <iframe id="signageVideoFrame" src="${youtubeEmbedSrc(v.fileId, list.length <= 1)}"
-            allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-presentation"
-            referrerpolicy="no-referrer" frameborder="0"></iframe>
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerpolicy="strict-origin-when-cross-origin" frameborder="0" allowfullscreen></iframe>
           <div class="video-caption">${esc(v.judul)}</div>
         </div>`;
       // YouTube iframe tanpa IFrame API tidak mengirim event 'ended' ke halaman kita,
@@ -273,8 +320,7 @@ const VideoPanel = (() => {
     panel.innerHTML = `
       <div class="video-frame">
         <iframe id="signageVideoFrame" src="${drivePreviewSrc(v.fileId)}"
-          allow="autoplay" sandbox="allow-scripts allow-same-origin allow-presentation"
-          referrerpolicy="no-referrer" frameborder="0"></iframe>
+          allow="autoplay" referrerpolicy="strict-origin-when-cross-origin" frameborder="0" allowfullscreen></iframe>
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
     if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
@@ -294,23 +340,26 @@ const VideoPanel = (() => {
 
 /* ═══════════════════════════════════════════════════════
    SLIDESHOW ENGINE (tabel harga saja — video tidak ikut)
+   Indikator memakai "story progress" bersegmen (gaya Instagram/TikTok
+   Stories) — tiap segmen mewakili 1 slide, otomatis menyesuaikan
+   jumlah slide berapapun banyaknya, jauh lebih rapi daripada dots.
 ═══════════════════════════════════════════════════════ */
 let slides = [];
 let currentIdx = 0;
 let paused = false;
 let progressRAF = null;
 let progStart = null;
-const progressBar = document.getElementById('progressBar');
 
 function renderSlideshow(tableSlides) {
   const wrap = document.getElementById('slideshowWrap');
-  const dotsWrap = document.getElementById('slideDots');
+  const segWrap = document.getElementById('storyProgress');
   wrap.innerHTML = '';
-  dotsWrap.innerHTML = '';
+  segWrap.innerHTML = '';
   slides = tableSlides;
 
   if (!slides.length) {
     wrap.innerHTML = '<div class="empty-state">Belum ada data harga. Cek Spreadsheet / klik Refresh.</div>';
+    updateNowLabel(null);
     return;
   }
 
@@ -319,19 +368,32 @@ function renderSlideshow(tableSlides) {
     if (i === 0) el.classList.add('active');
     wrap.appendChild(el);
 
-    const dot = document.createElement('button');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.title = s.title;
-    dot.addEventListener('click', () => { stopProgress(); goTo(i, i > currentIdx ? 'next' : 'prev'); if (!paused) startProgress(); });
-    dotsWrap.appendChild(dot);
+    const seg = document.createElement('button');
+    seg.className = 'seg' + (i === 0 ? ' seg-active' : '');
+    seg.title = s.title;
+    seg.innerHTML = '<span class="seg-fill"></span>';
+    seg.addEventListener('click', () => { stopProgress(); goTo(i, i > currentIdx ? 'next' : 'prev'); if (!paused) startProgress(); });
+    segWrap.appendChild(seg);
   });
 
   currentIdx = 0;
+  updateNowLabel(slides[0]);
   startProgress();
 }
 
+function updateNowLabel(slide) {
+  const el = document.getElementById('ctrlNow');
+  if (!el) return;
+  el.classList.remove('show');
+  window.clearTimeout(updateNowLabel._t);
+  updateNowLabel._t = window.setTimeout(() => {
+    el.textContent = slide ? slide.title : '';
+    el.classList.add('show');
+  }, 120);
+}
+
 function goTo(idx, dir = 'next') {
-  const dots = Array.from(document.querySelectorAll('.dot'));
+  const segs  = Array.from(document.querySelectorAll('.seg'));
   const nodes = Array.from(document.querySelectorAll('#slideshowWrap .slide'));
   if (!nodes.length || idx === currentIdx) return;
   const prev = currentIdx;
@@ -340,7 +402,13 @@ function goTo(idx, dir = 'next') {
   nodes[prev].classList.add(dir === 'next' ? 'exit-left' : 'exit-right');
   setTimeout(() => nodes[prev].classList.remove('exit-left', 'exit-right'), 700);
   nodes[currentIdx].classList.add('active');
-  dots.forEach((d, i) => d.classList.toggle('active', i === currentIdx));
+  segs.forEach((s, i) => {
+    s.classList.toggle('seg-active', i === currentIdx);
+    s.classList.toggle('seg-done', i < currentIdx);
+    const fill = s.querySelector('.seg-fill');
+    if (fill) { fill.style.transition = 'none'; fill.style.width = i < currentIdx ? '100%' : (i === currentIdx ? '0%' : '0%'); }
+  });
+  updateNowLabel(slides[currentIdx]);
 }
 const nextSlide = () => goTo(currentIdx + 1, 'next');
 const prevSlide = () => goTo(currentIdx - 1, 'prev');
@@ -348,12 +416,12 @@ const prevSlide = () => goTo(currentIdx - 1, 'prev');
 function startProgress() {
   cancelAnimationFrame(progressRAF);
   if (!slides.length) return;
-  progressBar.style.transition = 'none';
-  progressBar.style.width = '0%';
+  const fill = document.querySelector(`.seg:nth-child(${currentIdx + 1}) .seg-fill`);
+  if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
   progStart = performance.now();
   function tick(now) {
     const pct = Math.min(((now - progStart) / CONFIG.SLIDE_DURATION) * 100, 100);
-    progressBar.style.width = pct + '%';
+    if (fill) fill.style.width = pct + '%';
     if (pct < 100) {
       progressRAF = requestAnimationFrame(tick);
     } else {
@@ -394,23 +462,34 @@ sw.addEventListener('touchend', e => {
 async function loadAll() {
   setStatus('loading', 'Memuat data…');
   document.getElementById('btnRefresh').classList.add('spinning');
+  const { mode, reason } = resolveMode();
+
   try {
     let data;
-    if (CONFIG.DEMO_MODE) {
+    if (mode === 'demo') {
       await new Promise(r => setTimeout(r, 250));
       data = DEMO_DATA;
     } else {
-      data = await fetchJSON(`${CONFIG.GAS_URL}?action=all`);
+      data = validateAllPayload(await fetchJSON(`${CONFIG.GAS_URL}?action=all`, CONFIG.FETCH_TIMEOUT));
     }
 
     renderCokimBar(data.cokim);
     renderSlideshow(buildTableSlides(data.pages || {}));
     VideoPanel.mount(data.videos || []);
 
-    setStatus('online', CONFIG.DEMO_MODE ? 'Demo Mode' : 'Online — data dimuat sekali saat halaman dibuka');
+    if (mode === 'demo') {
+      setStatus('demo', 'Demo Mode' + (reason ? ' — ' + reason : ''));
+    } else {
+      setStatus('online', 'Online — data dimuat sekali saat halaman dibuka');
+    }
   } catch (err) {
     console.error('loadAll error:', err);
     setStatus('error', 'Gagal memuat data: ' + err.message);
+    // Tampilkan data demo sebagai fallback supaya layar TV tidak kosong total,
+    // sambil status tetap jelas menunjukkan bahwa ini BUKAN data live.
+    renderCokimBar(DEMO_DATA.cokim);
+    renderSlideshow(buildTableSlides(DEMO_DATA.pages));
+    VideoPanel.mount(DEMO_DATA.videos);
   } finally {
     document.getElementById('btnRefresh').classList.remove('spinning');
   }
