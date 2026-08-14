@@ -271,32 +271,61 @@ function renderTableSlide(slide, index) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   YOUTUBE IFRAME API LOADER (dimuat sekali, lazy)
+   Diperlukan supaya kita bisa mengontrol mute/unmute video
+   YouTube secara real-time (parameter URL "mute=1" saja hanya
+   berlaku SEKALI saat video dimuat, tidak bisa diubah setelahnya
+   tanpa API resmi ini).
+═══════════════════════════════════════════════════════ */
+let ytApiPromise = null;
+function loadYouTubeAPI() {
+  if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    const prevCallback = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (typeof prevCallback === 'function') prevCallback(); resolve(window.YT); };
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  });
+  return ytApiPromise;
+}
+
+/* ═══════════════════════════════════════════════════════
    VIDEO PANEL — playlist independen, autoplay + loop
    Video TIDAK dibuat ulang saat tabel berganti slide, sehingga
    pemutaran tidak pernah terputus oleh transisi slideshow tabel.
+
+   CATATAN SUARA: browser modern MEWAJIBKAN video autoplay dalam
+   keadaan muted (tanpa suara) — ini kebijakan browser, bukan bug,
+   supaya video tidak tiba-tiba bersuara keras tanpa interaksi
+   pengguna. Karena ini adalah layar signage tanpa interaksi rutin,
+   video akan tetap default MUTED, tapi operator toko bisa menekan
+   tombol 🔊 di topbar untuk mengaktifkan suara kapan saja.
 ═══════════════════════════════════════════════════════ */
 const VideoPanel = (() => {
   let list = [];
   let idx = 0;
   let rotateTimer = null;
+  let muted = true;          // status suara berlaku untuk video manapun yang sedang/akan diputar
+  let ytPlayer = null;       // instance YT.Player aktif (jika platform === 'youtube')
+  let currentVideoEl = null; // elemen <video> aktif (jika platform === 'drive')
 
   function driveStreamSrc(fileId)  { return `https://drive.google.com/uc?export=download&id=${fileId}`; }
   function drivePreviewSrc(fileId) { return `https://drive.google.com/file/d/${fileId}/preview`; }
-  function youtubeEmbedSrc(id, loopSingle) {
-    // autoplay=1 + mute=1 wajib agar autoplay diizinkan browser tanpa interaksi user.
-    // controls=0, modestbranding=1, rel=0, iv_load_policy=3 → tampilan bersih utk signage.
-    // loop=1&playlist=ID → trik resmi YouTube agar 1 video looping terus-menerus.
-    const base = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&modestbranding=1` +
-      `&rel=0&iv_load_policy=3&playsinline=1&fs=0&disablekb=1`;
-    return loopSingle ? `${base}&loop=1&playlist=${id}` : base;
+
+  function destroyCurrentPlayer() {
+    if (ytPlayer) { try { ytPlayer.destroy(); } catch (e) {} ytPlayer = null; }
+    currentVideoEl = null;
   }
 
   function mount(videos) {
     stopRotate();
+    destroyCurrentPlayer();
     list = (videos || []).filter(v => v.platform && isValidMediaId(v));
     const panel = document.getElementById('videoPanel');
     if (!panel) return;
-    if (!list.length) { panel.classList.add('empty'); panel.innerHTML = ''; return; }
+    if (!list.length) { panel.classList.add('empty'); panel.innerHTML = ''; refreshMuteButtonUI(); return; }
     panel.classList.remove('empty');
     idx = 0;
     playCurrent(panel);
@@ -304,20 +333,50 @@ const VideoPanel = (() => {
 
   function playCurrent(panel) {
     stopRotate();
+    destroyCurrentPlayer();
     const v = list[idx];
     if (!v) return;
+    const requestToken = Symbol('video-request'); // guard: pastikan hasil async masih relevan
+    playCurrent._token = requestToken;
 
     if (v.platform === 'youtube') {
       panel.innerHTML = `
         <div class="video-frame">
-          <iframe id="signageVideoFrame" src="${youtubeEmbedSrc(v.fileId, list.length <= 1)}"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            referrerpolicy="strict-origin-when-cross-origin" frameborder="0" allowfullscreen></iframe>
+          <div id="ytPlayerHost"></div>
           <div class="video-caption">${esc(v.judul)}</div>
         </div>`;
-      // YouTube iframe tanpa IFrame API tidak mengirim event 'ended' ke halaman kita,
-      // jadi playlist multi-video dirotasi berdasarkan durasi (kolom F sheet VIDEO).
+      const loopSingle = list.length <= 1;
+      // Timer cadangan: kalau event 'ended' resmi dari YouTube gagal terpicu
+      // (kadang terjadi pada video dengan pembatasan tertentu), rotasi tetap
+      // jalan berdasarkan durasi dari sheet VIDEO supaya tidak macet.
       if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
+
+      loadYouTubeAPI().then(YT => {
+        if (playCurrent._token !== requestToken) return; // sudah pindah video lain, batalkan
+        const host = document.getElementById('ytPlayerHost');
+        if (!host) return;
+        ytPlayer = new YT.Player(host, {
+          width: '100%', height: '100%', videoId: v.fileId,
+          playerVars: {
+            autoplay: 1, mute: 1, controls: 0, modestbranding: 1, rel: 0,
+            iv_load_policy: 3, playsinline: 1, fs: 0, disablekb: 1,
+            loop: loopSingle ? 1 : 0, playlist: loopSingle ? v.fileId : undefined,
+          },
+          events: {
+            onReady: (e) => {
+              if (playCurrent._token !== requestToken) return;
+              muted ? e.target.mute() : e.target.unMute();
+              e.target.playVideo();
+              refreshMuteButtonUI();
+            },
+            onStateChange: (e) => {
+              if (playCurrent._token !== requestToken) return;
+              if (e.data === YT.PlayerState.ENDED && list.length > 1) { stopRotate(); next(); }
+            },
+            onError: () => { if (playCurrent._token === requestToken) fallbackToIframe(panel, v); },
+          },
+        });
+      });
       return;
     }
 
@@ -328,6 +387,8 @@ const VideoPanel = (() => {
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
     const videoEl = document.getElementById('signageVideo');
+    currentVideoEl = videoEl;
+    videoEl.muted = muted;
     const source = document.createElement('source');
     source.src = driveStreamSrc(v.fileId);
     source.type = 'video/mp4';
@@ -335,18 +396,30 @@ const VideoPanel = (() => {
 
     videoEl.addEventListener('ended', next, { once: true });
     videoEl.addEventListener('error', () => fallbackToIframe(panel, v), { once: true });
-    videoEl.play().catch(() => { /* autoplay diblokir browser: biarkan diam, tetap muted+loop siap */ });
+    videoEl.play().then(refreshMuteButtonUI).catch(() => {
+      // Autoplay dengan suara diblokir browser: paksa muted lalu coba lagi
+      // supaya video tetap jalan (tanpa suara) daripada diam sama sekali.
+      videoEl.muted = true;
+      videoEl.play().catch(() => {});
+      refreshMuteButtonUI();
+    });
   }
 
   function fallbackToIframe(panel, v) {
-    // Jika pemutaran langsung Drive gagal (mis. file besar / izin berbeda),
-    // gunakan Google Drive preview embed sebagai cadangan.
+    // Jika pemutaran langsung gagal (mis. file Drive besar / video di-nonaktifkan
+    // embed-nya), gunakan mode pratinjau sebagai cadangan (tanpa kontrol suara —
+    // tombol mute disembunyikan otomatis selama mode ini aktif).
+    destroyCurrentPlayer();
+    const src = v.platform === 'youtube'
+      ? `https://www.youtube.com/embed/${v.fileId}?autoplay=1&mute=1&controls=0`
+      : drivePreviewSrc(v.fileId);
     panel.innerHTML = `
       <div class="video-frame">
-        <iframe id="signageVideoFrame" src="${drivePreviewSrc(v.fileId)}"
+        <iframe id="signageVideoFrame" src="${src}"
           allow="autoplay" referrerpolicy="strict-origin-when-cross-origin" frameborder="0" allowfullscreen></iframe>
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
+    refreshMuteButtonUI();
     if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
   }
 
@@ -359,8 +432,37 @@ const VideoPanel = (() => {
     if (panel) playCurrent(panel);
   }
 
-  return { mount };
+  /** Bisa dikontrol dari fallback iframe (tidak ada API) → sembunyikan tombol mute. */
+  function isControllable() { return !!(ytPlayer || currentVideoEl); }
+
+  function toggleMute() {
+    muted = !muted;
+    applyMute();
+    return muted;
+  }
+  function applyMute() {
+    if (ytPlayer && typeof ytPlayer.mute === 'function') {
+      try { muted ? ytPlayer.mute() : ytPlayer.unMute(); } catch (e) {}
+    }
+    if (currentVideoEl) currentVideoEl.muted = muted;
+  }
+  function isMuted() { return muted; }
+
+  return { mount, toggleMute, isMuted, isControllable };
 })();
+
+function refreshMuteButtonUI() {
+  const btn = document.getElementById('btnMute');
+  if (!btn) return;
+  const controllable = VideoPanel.isControllable();
+  btn.style.display = controllable ? '' : 'none';
+  btn.classList.toggle('is-unmuted', !VideoPanel.isMuted());
+  btn.title = VideoPanel.isMuted() ? 'Aktifkan suara video' : 'Matikan suara video';
+}
+document.getElementById('btnMute').addEventListener('click', () => {
+  VideoPanel.toggleMute();
+  refreshMuteButtonUI();
+});
 
 /* ═══════════════════════════════════════════════════════
    SLIDESHOW ENGINE (tabel harga saja — video tidak ikut)
