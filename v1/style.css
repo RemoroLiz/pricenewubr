@@ -92,6 +92,11 @@ html, body {
 }
 .cb:hover { background: rgba(212,160,23,.28); }
 .cb-pause { letter-spacing: -1px; min-width: 30px; }
+.cb-mute { display: flex; align-items: center; justify-content: center; padding: 4px 8px; }
+.cb-mute .icon-unmuted { display: none; }
+.cb-mute.is-unmuted .icon-muted { display: none; }
+.cb-mute.is-unmuted .icon-unmuted { display: block; }
+.cb-mute.is-unmuted { background: rgba(46,204,113,.18); border-color: rgba(46,204,113,.4); color: #6bdb95; }
 
 .btn-refresh {
   display: flex; align-items: center; gap: 5px;
