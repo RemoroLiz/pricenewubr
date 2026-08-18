@@ -208,6 +208,15 @@ const VideoPanel = (() => {
     playCurrent(panel);
   }
 
+  /** Sembunyikan cover loading dengan transisi halus — dipanggil hanya saat
+      video BENAR-BENAR mulai diputar (event asli), bukan tebakan waktu,
+      supaya tidak ada lagi kedipan tombol play/nama channel YouTube yang
+      sempat terlihat sebelum video mulai. Idempotent (aman dipanggil 2x). */
+  function revealVideo(panel) {
+    const cover = panel && panel.querySelector('.video-loading-cover');
+    if (cover) cover.classList.add('hide');
+  }
+
   function playCurrent(panel) {
     stopRotate();
     destroyCurrentPlayer();
@@ -215,11 +224,13 @@ const VideoPanel = (() => {
     if (!v) return;
     const requestToken = Symbol('video-request'); // guard: pastikan hasil async masih relevan
     playCurrent._token = requestToken;
+    const coverHTML = '<div class="video-loading-cover"></div>';
 
     if (v.platform === 'youtube') {
       panel.innerHTML = `
         <div class="video-frame">
           <div id="ytPlayerHost"></div>
+          ${coverHTML}
           <div class="video-caption">${esc(v.judul)}</div>
         </div>`;
       const loopSingle = list.length <= 1;
@@ -227,6 +238,9 @@ const VideoPanel = (() => {
       // (kadang terjadi pada video dengan pembatasan tertentu), rotasi tetap
       // jalan berdasarkan durasi dari sheet VIDEO supaya tidak macet.
       if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
+      // Jaring pengaman: paksa buka cover setelah 4 detik meski event
+      // 'playing' resmi tidak kunjung terpicu, supaya panel tidak macet hitam.
+      const coverFailsafe = setTimeout(() => revealVideo(panel), 4_000);
 
       loadYouTubeAPI().then(YT => {
         if (playCurrent._token !== requestToken) return; // sudah pindah video lain, batalkan
@@ -248,9 +262,11 @@ const VideoPanel = (() => {
             },
             onStateChange: (e) => {
               if (playCurrent._token !== requestToken) return;
+              // state 1 = PLAYING → video benar-benar sudah tampil, aman buka cover.
+              if (e.data === YT.PlayerState.PLAYING) { clearTimeout(coverFailsafe); revealVideo(panel); }
               if (e.data === YT.PlayerState.ENDED && list.length > 1) { stopRotate(); next(); }
             },
-            onError: () => { if (playCurrent._token === requestToken) fallbackToIframe(panel, v); },
+            onError: () => { if (playCurrent._token === requestToken) { clearTimeout(coverFailsafe); fallbackToIframe(panel, v); } },
           },
         });
       });
@@ -261,6 +277,7 @@ const VideoPanel = (() => {
     panel.innerHTML = `
       <div class="video-frame">
         <video id="signageVideo" autoplay muted playsinline ${list.length <= 1 ? 'loop' : ''}></video>
+        ${coverHTML}
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
     const videoEl = document.getElementById('signageVideo');
@@ -271,8 +288,10 @@ const VideoPanel = (() => {
     source.type = 'video/mp4';
     videoEl.appendChild(source);
 
+    const coverFailsafe = setTimeout(() => revealVideo(panel), 4_000);
+    videoEl.addEventListener('playing', () => { clearTimeout(coverFailsafe); revealVideo(panel); }, { once: true });
     videoEl.addEventListener('ended', next, { once: true });
-    videoEl.addEventListener('error', () => fallbackToIframe(panel, v), { once: true });
+    videoEl.addEventListener('error', () => { clearTimeout(coverFailsafe); fallbackToIframe(panel, v); }, { once: true });
     videoEl.play().then(refreshMuteButtonUI).catch(() => {
       // Autoplay dengan suara diblokir browser: paksa muted lalu coba lagi
       // supaya video tetap jalan (tanpa suara) daripada diam sama sekali.
@@ -294,8 +313,12 @@ const VideoPanel = (() => {
       <div class="video-frame">
         <iframe id="signageVideoFrame" src="${src}"
           allow="autoplay" referrerpolicy="strict-origin-when-cross-origin" frameborder="0" allowfullscreen></iframe>
+        <div class="video-loading-cover"></div>
         <div class="video-caption">${esc(v.judul)}</div>
       </div>`;
+    // Iframe cadangan tidak bisa dideteksi statusnya secara pasti (beda origin),
+    // jadi cover dibuka setelah jeda singkat tetap (praktik wajar untuk fallback).
+    setTimeout(() => revealVideo(panel), 1_500);
     refreshMuteButtonUI();
     if (list.length > 1) rotateTimer = setTimeout(next, v.durasi * 1000);
   }
@@ -462,7 +485,33 @@ sw.addEventListener('touchend', e => {
    LOAD DATA — HANYA dipanggil saat load awal & klik Refresh manual
    (tidak ada setInterval polling, sesuai permintaan)
 ═══════════════════════════════════════════════════════ */
-async function loadAll() {
+/* ═══════════════════════════════════════════════════════
+   AUTO-RECOVERY (khusus TV, layar tanpa pengawasan)
+   Jika load gagal total (setelah retry bawaan fetchJSONWithRetry),
+   TV dijadwalkan mencoba lagi otomatis di latar belakang dengan
+   jeda yang membesar bertahap (30d → 60d → 2m → 5m, lalu tetap di
+   5 menit) — supaya layar tidak macet menampilkan pesan error
+   selamanya sampai ada orang yang menekan Refresh manual.
+   Ini BUKAN polling data rutin (prinsip "load sekali" tetap berlaku
+   selama data berhasil dimuat) — ini murni pemulihan dari kegagalan.
+═══════════════════════════════════════════════════════ */
+let autoRetryTimer = null;
+let autoRetryDelayIdx = 0;
+const AUTO_RETRY_DELAYS = [30_000, 60_000, 120_000, 300_000]; // ms, nilai terakhir diulang seterusnya
+
+function clearAutoRetry() {
+  if (autoRetryTimer) { clearTimeout(autoRetryTimer); autoRetryTimer = null; }
+  autoRetryDelayIdx = 0;
+}
+function scheduleAutoRetry() {
+  if (autoRetryTimer) return; // sudah ada jadwal berjalan, jangan tumpuk
+  const delay = AUTO_RETRY_DELAYS[Math.min(autoRetryDelayIdx, AUTO_RETRY_DELAYS.length - 1)];
+  autoRetryDelayIdx++;
+  autoRetryTimer = setTimeout(() => { autoRetryTimer = null; loadAll(true); }, delay);
+}
+
+async function loadAll(isAutoRetry) {
+  if (!isAutoRetry) clearAutoRetry(); // permintaan manual membatalkan jadwal auto-retry lama
   setStatus('loading', 'Memuat data…');
   document.getElementById('btnRefresh').classList.add('spinning');
   const { mode, reason } = resolveMode();
@@ -473,7 +522,7 @@ async function loadAll() {
       await new Promise(r => setTimeout(r, 250));
       data = DEMO_DATA;
     } else {
-      data = validateAllPayload(await fetchJSON(`${CONFIG.GAS_URL}?action=all`, CONFIG.FETCH_TIMEOUT));
+      data = validateAllPayload(await fetchJSONWithRetry(`${CONFIG.GAS_URL}?action=all`, CONFIG.FETCH_TIMEOUT));
     }
 
     renderCokimBar(data.cokim);
@@ -485,19 +534,21 @@ async function loadAll() {
     } else {
       setStatus('online', 'Online — data dimuat sekali saat halaman dibuka');
     }
+    clearAutoRetry(); // berhasil → reset, tidak perlu auto-retry lagi
   } catch (err) {
     console.error('loadAll error:', err);
-    setStatus('error', 'Gagal memuat data: ' + err.message);
+    setStatus('error', 'Gagal memuat data: ' + err.message + ' — mencoba lagi otomatis…');
     // Tampilkan data demo sebagai fallback supaya layar TV tidak kosong total,
     // sambil status tetap jelas menunjukkan bahwa ini BUKAN data live.
     renderCokimBar(DEMO_DATA.cokim);
     renderSlideshow(buildTableSlides(DEMO_DATA.pages));
     VideoPanel.mount(DEMO_DATA.videos);
+    if (mode !== 'demo') scheduleAutoRetry();
   } finally {
     document.getElementById('btnRefresh').classList.remove('spinning');
   }
 }
-document.getElementById('btnRefresh').addEventListener('click', loadAll);
+document.getElementById('btnRefresh').addEventListener('click', () => loadAll(false));
 
 /* ═══════════════════════════════════════════════════════
    INIT — load sekali, TIDAK ADA auto-refresh/polling
