@@ -19,7 +19,10 @@
    CONFIG
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
-  FETCH_TIMEOUT: 12_000,     // ms — batas waktu tunggu respons Apps Script sebelum dianggap gagal
+  FETCH_TIMEOUT: 20_000,     // ms — batas waktu tunggu SATU percobaan (dinaikkan dari 12s karena
+                              // cold-start Apps Script / spreadsheet besar kadang butuh waktu lebih)
+  RETRY_ATTEMPTS: 3,         // jumlah percobaan total (termasuk percobaan pertama) sebelum menyerah
+  RETRY_DELAYS: [2_000, 5_000], // jeda (ms) sebelum percobaan ke-2 dan ke-3
   /* Paksa selalu pakai data contoh lokal walau GAS_URL sudah diisi benar.
      Biarkan `false` untuk pemakaian normal — mode live/demo akan
      TERDETEKSI OTOMATIS dari GAS_URL di bawah (tidak perlu diubah manual). */
@@ -148,4 +151,26 @@ function validateAllPayload(data) {
   if (!Array.isArray(data.videos)) data.videos = [];
   if (!data.cokim || typeof data.cokim !== 'object') data.cokim = { global: null, trimas: null };
   return data;
+}
+
+/** fetchJSON dengan retry otomatis + backoff — mengatasi kelambatan sesaat
+    (cold-start Apps Script, koneksi WiFi TV yang sempat lemot, dsb) supaya
+    tidak langsung menampilkan "gagal dimuat" hanya karena satu percobaan
+    telat sedikit. Percobaan ke-2/3 memberi jeda sebelum mencoba lagi. */
+async function fetchJSONWithRetry(url, timeoutMs, attempts, delays) {
+  const maxAttempts = attempts || CONFIG.RETRY_ATTEMPTS || 1;
+  const waits = delays || CONFIG.RETRY_DELAYS || [];
+  let lastErr;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      return await fetchJSON(url, timeoutMs);
+    } catch (err) {
+      lastErr = err;
+      const isLastTry = i === maxAttempts - 1;
+      if (isLastTry) break;
+      const wait = waits[i] != null ? waits[i] : 3_000;
+      await new Promise(r => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
 }
