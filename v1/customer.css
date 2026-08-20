@@ -1,10 +1,9 @@
 /* =========================================================
-   PANTES GOLD & JEWELRY — customer.css
-   Halaman berbagi harga ke customer: terang, hangat, mudah dibaca,
-   gaya "kartu katalog butik" — sengaja berbeda dari tema gelap TV
-   signage (index.html/style.css) karena konteks pemakaiannya beda:
-   dibaca santai oleh customer di HP/tablet, bukan dilihat sekilas
-   dari kejauhan seperti layar TV.
+   PANTES GOLD & JEWELRY — customer.css  v3
+   Halaman berbagi harga ke customer, sekarang memakai template
+   bertema per kategori (Antam, Lotus Archi, UBS, Trimas/Nota Luar,
+   Harga Perhiasan) — diadaptasi dari desain story/banner toko.
+   Setiap template bisa diunduh sebagai gambar satu per satu.
    ========================================================= */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,14 +14,9 @@
   --gold:       #c9991a;
   --gold-deep:  #a87a12;
   --gold-shine: #f0c862;
-  --burgundy:   #7a2032;   /* aksen sekunder — beda dari gold, nuansa beludru perhiasan */
-  --burgundy-deep: #5c1826;
   --paper:      #f7efdc;   /* dasar hangat seperti kertas katalog, bukan cream generik */
   --paper-card: #fffdf8;
   --line:       rgba(43,22,10,.12);
-  --green-antam:#1a7a3c;
-  --red-lotus:  #7a2032;
-  --blue-ubs:   #1f4e9e;
   --font-body:  'Montserrat', 'Segoe UI', sans-serif;
   --font-display: 'Playfair Display', Georgia, serif;
 }
@@ -35,12 +29,12 @@ body {
     radial-gradient(circle at 15% 0%, rgba(201,153,26,.10) 0%, transparent 45%),
     radial-gradient(circle at 100% 30%, rgba(122,32,50,.06) 0%, transparent 40%);
   color: var(--ink);
-  padding-bottom: 96px; /* ruang untuk footer sticky */
+  padding-bottom: var(--cs-footer-h, 110px); /* ruang untuk footer sticky, diukur otomatis via JS */
   -webkit-font-smoothing: antialiased;
 }
 
 /* ══════════════════════════════════════════
-   HEADER
+   HEADER (ringkasan cokim di atas, terpisah dari template kategori)
 ═══════════════════════════════════════════ */
 .cs-header {
   background: linear-gradient(160deg, #241206 0%, #3b1f0a 55%, #241206 100%);
@@ -69,8 +63,6 @@ body {
   text-transform: capitalize;
 }
 
-/* Signature element: garis "kilau emas" tipis di bawah header —
-   satu sentuhan gerak yang halus, sesuai identitas perhiasan. */
 .cs-shimmer {
   height: 2px; margin-top: 16px; max-width: 760px; margin-left: auto; margin-right: auto;
   background: linear-gradient(90deg, transparent 0%, var(--gold) 20%, var(--gold-shine) 50%, var(--gold) 80%, transparent 100%);
@@ -81,10 +73,7 @@ body {
 @keyframes shimmer { 0% { background-position: 0% 0; } 100% { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .cs-shimmer { animation: none; } }
 
-.cs-cokim {
-  display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
-  margin-top: 14px;
-}
+.cs-cokim { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 .cs-pill {
   background: rgba(255,255,255,.06); border: 1px solid rgba(240,200,98,.28);
   border-radius: 20px; padding: 6px 16px; font-size: .74rem; color: #fdf3da;
@@ -111,60 +100,140 @@ body {
   transition: transform .15s, box-shadow .15s;
 }
 .cs-chip:active { transform: scale(.96); }
-.cs-chip.accent-gold  { border-color: rgba(201,153,26,.5); }
-.cs-chip.accent-brown { border-color: rgba(92,61,31,.5); }
-.cs-chip.accent-green { border-color: rgba(26,122,60,.5); }
-.cs-chip.accent-red    { border-color: rgba(122,32,50,.5); }
-.cs-chip.accent-blue   { border-color: rgba(31,78,158,.5); }
+.tpl-chip-antam     { border-color: rgba(201,153,26,.6); }
+.tpl-chip-archi     { border-color: rgba(200,30,40,.6); }
+.tpl-chip-ubs       { border-color: rgba(20,42,92,.6); }
+.tpl-chip-trimas    { border-color: rgba(0,0,0,.55); }
+.tpl-chip-perhiasan { border-color: rgba(107,67,28,.6); }
 
 /* ══════════════════════════════════════════
-   MAIN — kartu tabel per kategori
+   MAIN
 ═══════════════════════════════════════════ */
-.cs-main { max-width: 760px; margin: 0 auto; padding: 20px 16px 12px; }
+.cs-main { max-width: 480px; margin: 0 auto; padding: 20px 16px 12px; }
 .cs-loading, .cs-empty {
   text-align: center; color: var(--ink-soft); padding: 40px 20px; font-size: .9rem;
 }
 
-.cs-card {
-  background: var(--paper-card);
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  box-shadow: 0 4px 18px rgba(43,22,10,.06);
-  margin-bottom: 18px;
-  overflow: hidden;
-  scroll-margin-top: 64px; /* supaya tidak ketutupan quicknav saat di-jump */
-  border-top: 4px solid var(--gold);
+/* ══════════════════════════════════════════
+   TEMPLATE CARDS — tema per kategori, dibuat menyerupai
+   desain story/banner toko (Antam, Lotus Archi, UBS,
+   Trimas/Nota Luar, Harga Perhiasan). Kartu inilah yang
+   ditangkap langsung oleh html2canvas saat tombol download
+   ditekan, jadi tampilan di halaman = tampilan hasil unduhan.
+═══════════════════════════════════════════ */
+.tpl-card {
+  position: relative; border-radius: 18px; overflow: hidden;
+  margin-bottom: 24px; box-shadow: 0 8px 28px rgba(0,0,0,.22);
+  scroll-margin-top: 64px;
 }
-.cs-card.accent-brown { border-top-color: var(--ink-soft); }
-.cs-card.accent-green { border-top-color: var(--green-antam); }
-.cs-card.accent-red   { border-top-color: var(--burgundy); }
-.cs-card.accent-blue  { border-top-color: var(--blue-ubs); }
+.tpl-inner { padding: 30px 20px 32px; text-align: center; }
 
-.cs-card-title {
-  font-family: var(--font-display); font-weight: 700; font-style: italic;
-  font-size: clamp(1rem, 3.4vw, 1.25rem); color: var(--ink);
-  padding: 16px 18px 12px; display: flex; align-items: center; gap: 8px;
+.tpl-download-btn {
+  position: absolute; top: 12px; right: 12px; z-index: 20;
+  width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.16); color: #fff; backdrop-filter: blur(4px);
+  transition: background .15s, transform .15s;
 }
-.cs-card-title::before { content: '◆'; color: var(--gold); font-size: .7rem; }
+.tpl-download-btn:hover { background: rgba(255,255,255,.3); transform: scale(1.06); }
+.tpl-download-btn:active { transform: scale(.94); }
+.tpl-antam .tpl-download-btn { background: rgba(43,22,10,.08); color: #2b160a; }
+.tpl-antam .tpl-download-btn:hover { background: rgba(43,22,10,.16); }
 
-.cs-table-wrap { overflow-x: auto; }
-.cs-table { width: 100%; border-collapse: collapse; }
-.cs-table thead th {
-  background: rgba(201,153,26,.10);
-  color: var(--ink-soft); text-transform: uppercase; letter-spacing: .5px;
-  font-size: .66rem; font-weight: 800;
-  padding: 9px 14px; text-align: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+/* Border dekoratif ala art-deco emas, dipakai di tema gelap */
+.tpl-border { height: 12px; background: repeating-linear-gradient(45deg, #d8b34a 0 6px, #8a6a1c 6px 12px); }
+
+/* Brand mark (dibangun dari teks, bukan gambar, supaya konsisten
+   di semua tema terang/gelap tanpa bergantung file logo eksternal) */
+.tpl-brand { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 10px; }
+.tpl-brand-name { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: 2px; }
+.tpl-brand-tri { color: #e8b23c; }
+.tpl-brand-sub { font-family: var(--font-display); font-style: italic; font-size: 11px; letter-spacing: .5px; opacity: .85; }
+.tpl-brand-light .tpl-brand-name, .tpl-brand-light .tpl-brand-sub { color: #fff; }
+.tpl-brand-dark  .tpl-brand-name, .tpl-brand-dark  .tpl-brand-sub { color: #2b160a; }
+.tpl-brand-trimas svg { color: #f0c862; margin-bottom: 4px; }
+
+.tpl-date-pill {
+  display: inline-block; margin: 0 auto 16px; padding: 6px 20px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: .5px;
 }
-.cs-table tbody td {
-  padding: 12px 14px; text-align: center; font-weight: 700; color: var(--ink);
-  font-size: clamp(.85rem, 3vw, .98rem);
-  border-bottom: 1px solid var(--line);
+.tpl-antam .tpl-date-pill { background: #fff; border: 1px solid #ddd; color: #2b160a; }
+.tpl-archi .tpl-date-pill, .tpl-ubs .tpl-date-pill, .tpl-trimas .tpl-date-pill, .tpl-perhiasan .tpl-date-pill {
+  border: 1px solid rgba(240,200,98,.5); color: #f0c862; background: rgba(255,255,255,.05);
 }
-.cs-table tbody tr:last-child td { border-bottom: none; }
-.cs-table tbody tr:nth-child(even) { background: rgba(201,153,26,.045); }
-.cs-table tbody td:first-child {
-  font-weight: 800; color: var(--gold-deep); white-space: nowrap;
+
+/* Badge pil (Antam / Lotus Archi / UBS) */
+.tpl-badge {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 30px; padding: 10px 26px; margin: 4px 0 16px; min-width: 72%;
 }
+.tpl-badge-main { font-weight: 800; font-size: 14px; letter-spacing: .4px; }
+.tpl-badge-sub { font-weight: 600; font-size: 10.5px; opacity: .9; margin-top: 2px; }
+.tpl-badge-antam { background: linear-gradient(135deg, #8a5a1c, #c9991a); color: #fff; }
+.tpl-badge-archi { background: #c81f28; border: 2px solid #e8b23c; color: #fff; }
+.tpl-badge-ubs   { background: #12234d; border: 2px solid #e8b23c; color: #f0c862; }
+
+/* Judul gaya glow/script (Trimas / Harga Perhiasan) */
+.tpl-title-glow {
+  font-family: var(--font-body); font-weight: 800; font-size: 19px; letter-spacing: 1px;
+  text-transform: uppercase; margin: 6px 0 20px;
+  background: linear-gradient(180deg, #f5e6b8, #caa53d);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tpl-title-script {
+  font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 25px;
+  margin: 4px 0 18px;
+  background: linear-gradient(180deg, #f5e6b8, #c9991a);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Latar per tema */
+.tpl-antam     { background: radial-gradient(circle at 15% 0%, #fff 0%, #f3ece0 60%, #ece2d0 100%); }
+.tpl-antam .tpl-inner     { color: #2b160a; }
+.tpl-archi     { background: linear-gradient(160deg, #4a0e12 0%, #7a1620 45%, #4a0e12 100%); }
+.tpl-archi .tpl-inner     { color: #fff; }
+.tpl-ubs       { background: linear-gradient(160deg, #0a1530 0%, #142a5c 45%, #0a1530 100%); }
+.tpl-ubs .tpl-inner       { color: #fff; }
+.tpl-trimas    { background: radial-gradient(circle at 80% 0%, #241a05 0%, #0a0a0a 55%, #000 100%); }
+.tpl-trimas .tpl-inner    { color: #fff; }
+.tpl-perhiasan { background: linear-gradient(160deg, #3b2510 0%, #6b431c 50%, #2b1a0a 100%); }
+.tpl-perhiasan .tpl-inner { color: #fff; }
+
+/* Tabel harga di dalam template */
+.tpl-table-wrap { margin: 0 0 16px; overflow-x: auto; }
+.tpl-table { width: 100%; border-collapse: collapse; }
+.tpl-table th, .tpl-table td { padding: 10px 6px; text-align: center; font-size: 12.5px; }
+
+.tpl-antam .tpl-table { background: #fff; border: 2px solid #1a1a1a; }
+.tpl-antam .tpl-table th { border: 1px solid #1a1a1a; font-weight: 800; color: #1a1a1a; }
+.tpl-antam .tpl-table td { border: 1px solid #1a1a1a; font-weight: 700; color: #1a1a1a; }
+.tpl-antam .tpl-table tbody tr:nth-child(even) { background: #f6f0e4; }
+
+.tpl-archi .tpl-table, .tpl-ubs .tpl-table, .tpl-perhiasan .tpl-table { border: 1px solid rgba(240,200,98,.5); }
+.tpl-archi .tpl-table th, .tpl-ubs .tpl-table th, .tpl-perhiasan .tpl-table th {
+  border: 1px solid rgba(240,200,98,.5); color: #f0c862; font-weight: 800; text-transform: uppercase; font-size: 11px;
+}
+.tpl-archi .tpl-table td, .tpl-ubs .tpl-table td, .tpl-perhiasan .tpl-table td {
+  border: 1px solid rgba(240,200,98,.35); color: #fff; font-weight: 700;
+}
+.tpl-archi .tpl-table tbody tr:nth-child(even),
+.tpl-ubs .tpl-table tbody tr:nth-child(even),
+.tpl-perhiasan .tpl-table tbody tr:nth-child(even) { background: rgba(0,0,0,.18); }
+
+.tpl-table td:first-child { font-weight: 800; }
+.tpl-sub-label { font-size: 9.5px; opacity: .8; font-weight: 600; }
+
+/* Baris pil (khusus tema Trimas / Nota Luar — tanpa tabel grid) */
+.tpl-pill-list { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.tpl-pill-row {
+  display: flex; align-items: center; gap: 16px;
+  border: 2px solid #caa53d; border-radius: 30px; padding: 11px 22px;
+}
+.tpl-pill-label {
+  font-weight: 800; font-size: 15px; color: #fff; min-width: 44px; text-align: left;
+  padding-right: 14px; border-right: 1px solid rgba(202,165,61,.5);
+}
+.tpl-pill-value { flex: 1; font-weight: 800; font-size: 17px; color: #fff; }
 
 /* ══════════════════════════════════════════
    FOOTER — sticky, aksi utama
@@ -177,24 +246,43 @@ body {
   box-shadow: 0 -4px 16px rgba(43,22,10,.08);
 }
 .cs-updated { text-align: center; font-size: .66rem; color: var(--ink-soft); margin-bottom: 8px; }
-.cs-actions { display: flex; gap: 8px; max-width: 760px; margin: 0 auto; }
+.cs-actions { display: flex; gap: 8px; max-width: 480px; margin: 0 auto; }
 .cs-btn {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-  border: none; border-radius: 10px; padding: 11px 10px; font-size: .78rem; font-weight: 700;
+  border: none; border-radius: 10px; padding: 11px 8px; font-size: .76rem; font-weight: 700;
   cursor: pointer; transition: transform .15s, opacity .15s; font-family: var(--font-body);
+  white-space: nowrap;
 }
 .cs-btn:active { transform: scale(.97); }
 .cs-btn-ghost { background: rgba(43,22,10,.06); color: var(--ink); border: 1px solid var(--line); }
 .cs-btn-ghost:hover { background: rgba(43,22,10,.1); }
 .cs-btn-primary {
   background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-  color: #2b1604; flex: 1.3;
+  color: #2b1604; flex: 1.2;
   box-shadow: 0 3px 12px rgba(201,153,26,.4);
 }
-.cs-brand-footer { text-align: center; font-size: .62rem; color: var(--ink-soft); opacity: .6; margin-top: 8px; }
+.cs-btn.is-loading { opacity: .6; pointer-events: none; }
+
+.cs-map-link {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  max-width: 480px; margin: 10px auto 0; padding: 8px 14px;
+  border-radius: 10px; background: rgba(201,153,26,.08); border: 1px solid rgba(201,153,26,.25);
+  color: var(--gold-deep); text-decoration: none; font-size: .68rem; font-weight: 600;
+  transition: background .15s;
+}
+.cs-map-link:hover { background: rgba(201,153,26,.16); }
+.cs-map-link svg { flex-shrink: 0; }
+.cs-map-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+.cs-brand-footer { text-align: center; font-size: .6rem; color: var(--ink-soft); opacity: .55; margin-top: 8px; }
+.cs-footer-hint {
+  text-align: center; font-size: .62rem; color: var(--ink-soft); opacity: .7;
+  margin-top: 8px;
+}
+.cs-footer-hint svg { color: var(--gold-deep); }
 
 /* ══════════════════════════════════════════
-   TOAST (konfirmasi "link disalin", dst.)
+   TOAST
 ═══════════════════════════════════════════ */
 .cs-toast {
   position: fixed; left: 50%; bottom: 100px; z-index: 100;
@@ -212,6 +300,7 @@ body {
   .cs-header-top { gap: 24px; }
   .cs-logo { height: 58px; }
   .cs-logo-trimas { height: 48px; }
+  .tpl-inner { padding: 38px 34px 40px; }
 }
 @media (max-width: 420px) {
   .cs-logo, .cs-logo-trimas { display: none; }
@@ -223,12 +312,12 @@ body {
 ═══════════════════════════════════════════ */
 @media print {
   body { background: #fff; padding-bottom: 0; }
-  .cs-quicknav, .cs-footer, .cs-toast, .cs-shimmer { display: none !important; }
+  .cs-quicknav, .cs-footer, .cs-toast, .cs-shimmer, .tpl-download-btn { display: none !important; }
   .cs-header { background: #fff !important; color: #000; padding: 0 0 12px; }
   .cs-heading h1, .cs-eyebrow, .cs-date { color: var(--ink) !important; text-shadow: none; }
   .cs-logo, .cs-logo-trimas { filter: none; mix-blend-mode: normal; }
   .cs-pill { border-color: var(--ink); color: var(--ink); background: #fff; }
   .cs-pill b { color: var(--ink); }
-  .cs-card { box-shadow: none; border: 1px solid #000; break-inside: avoid; page-break-inside: avoid; }
+  .tpl-card { box-shadow: none; break-inside: avoid; page-break-inside: avoid; }
   .cs-main { padding: 12px 0; max-width: 100%; }
 }
