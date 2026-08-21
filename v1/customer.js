@@ -86,7 +86,7 @@ function pantesLogoHTML(theme) {
   const src = light ? 'assets/pantes_logo.png' : 'assets/pantesputih.png';
   return `<div class="tpl-brand ${light ? 'tpl-brand-dark' : 'tpl-brand-light'}">
     <img src="${src}" alt="Pantes Gold &amp; Jewelry" class="tpl-logo-img" crossorigin="anonymous"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
     <div class="tpl-brand-fallback">
       <span class="tpl-brand-name">P<span class="tpl-brand-tri">▲</span>NTES</span>
       <span class="tpl-brand-sub">Gold &amp; Jewelry</span>
@@ -96,7 +96,7 @@ function pantesLogoHTML(theme) {
 function trimasLogoHTML() {
   return `<div class="tpl-brand tpl-brand-light tpl-brand-trimas">
     <img src="assets/trimas_putih.png" alt="Trimas — Terima Emas dari Seluruh Dunia" class="tpl-logo-img" crossorigin="anonymous"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
     <div class="tpl-brand-fallback">
       <span class="tpl-brand-name">TRIM<span class="tpl-brand-tri">▲</span>S</span>
       <span class="tpl-brand-sub">Terima Emas dari Seluruh Dunia</span>
