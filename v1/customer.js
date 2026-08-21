@@ -35,12 +35,13 @@ const TEMPLATE_GROUPS = [
       ANTAM_2026: ['ANTAM CERTIEYE RED MARK', '2026'],
       ANTAM_UNDER: ['ANTAM CERTIEYE RED MARK', 'UNDER 2026'],
     },
+    productImage: 'assets/bg_slide3.png',
   },
-  { id: 'ARCHI', label: 'Lotus Archi', theme: 'archi', sheetKeys: ['ARCHI'], badgeText: 'LOTUS ARCHI' },
-  { id: 'UBS_NEW', label: 'UBS Gold', theme: 'ubs', sheetKeys: ['UBS_NEW'], badgeText: 'UBS GOLD PRICE LIST' },
-  { id: 'NOTA_LUAR', label: 'Nota Luar', theme: 'trimas', sheetKeys: ['NOTA_LUAR'], badgeText: 'TERIMA EMAS HARGA TINGGI' },
-  { id: 'HARGA_EMAS', label: 'Harga Perhiasan', theme: 'perhiasan', sheetKeys: ['HARGA_EMAS'], badgeText: 'Harga Perhiasan' },
-  { id: 'EMASKU', label: 'Emasku', theme: 'antam', sheetKeys: ['EMASKU'], badgeText: ['EMASKU', ''] },
+  { id: 'ARCHI', label: 'Lotus Archi', theme: 'archi', sheetKeys: ['ARCHI'], badgeText: 'LOTUS ARCHI', productImage: 'assets/bg_slide3.png' },
+  { id: 'UBS_NEW', label: 'UBS Gold', theme: 'ubs', sheetKeys: ['UBS_NEW'], badgeText: 'UBS GOLD PRICE LIST', productImage: 'assets/bg_slide3.png' },
+  { id: 'NOTA_LUAR', label: 'Nota Luar', theme: 'trimas', sheetKeys: ['NOTA_LUAR'], badgeText: 'TERIMA EMAS HARGA TINGGI', productImage: null },
+  { id: 'HARGA_EMAS', label: 'Harga Perhiasan', theme: 'perhiasan', sheetKeys: ['HARGA_EMAS'], badgeText: 'Harga Perhiasan', productImage: 'assets/bg_slide2.png' },
+  { id: 'EMASKU', label: 'Emasku', theme: 'antam', sheetKeys: ['EMASKU'], badgeText: ['EMASKU', ''], productImage: 'assets/bg_slide3.png' },
 ];
 
 /* ═══════════════════════════════════════════════════════
@@ -77,21 +78,29 @@ function buildQuickNav(pages) {
 /* ═══════════════════════════════════════════════════════
    HELPERS render brand mark & badge & tabel bertema
 ═══════════════════════════════════════════════════════ */
+/** Logo ASLI (gambar) dengan cadangan teks otomatis kalau file gagal
+    dimuat (mis. nama file di server berbeda) — supaya tidak pernah
+    tampil ikon "gambar rusak" di kartu manapun. */
 function pantesLogoHTML(theme) {
   const light = theme === 'antam';
+  const src = light ? 'assets/pantes_logo.png' : 'assets/pantesputih.png';
   return `<div class="tpl-brand ${light ? 'tpl-brand-dark' : 'tpl-brand-light'}">
-    <span class="tpl-brand-name">P<span class="tpl-brand-tri">▲</span>NTES</span>
-    <span class="tpl-brand-sub">Gold &amp; Jewelry</span>
+    <img src="${src}" alt="Pantes Gold &amp; Jewelry" class="tpl-logo-img" crossorigin="anonymous"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="tpl-brand-fallback">
+      <span class="tpl-brand-name">P<span class="tpl-brand-tri">▲</span>NTES</span>
+      <span class="tpl-brand-sub">Gold &amp; Jewelry</span>
+    </div>
   </div>`;
 }
 function trimasLogoHTML() {
   return `<div class="tpl-brand tpl-brand-light tpl-brand-trimas">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/>
-      <path d="M5.5 6.5c2 1.6 4.2 2.5 6.5 2.5s4.5-.9 6.5-2.5"/><path d="M5.5 17.5c2-1.6 4.2-2.5 6.5-2.5s4.5.9 6.5 2.5"/>
-    </svg>
-    <span class="tpl-brand-name">TRIM<span class="tpl-brand-tri">▲</span>S</span>
-    <span class="tpl-brand-sub">Terima Emas dari Seluruh Dunia</span>
+    <img src="assets/trimas_putih.png" alt="Trimas — Terima Emas dari Seluruh Dunia" class="tpl-logo-img" crossorigin="anonymous"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="tpl-brand-fallback">
+      <span class="tpl-brand-name">TRIM<span class="tpl-brand-tri">▲</span>S</span>
+      <span class="tpl-brand-sub">Terima Emas dari Seluruh Dunia</span>
+    </div>
   </div>`;
 }
 /** Pisahkan label 2 kata jadi baris utama + sub-label kecil di bawahnya
@@ -163,6 +172,10 @@ function buildGroupCardHTML(group, pages) {
   const showGlowTitle = group.theme === 'trimas';
   const showScriptTitle = group.theme === 'perhiasan';
 
+  const productShotHTML = group.productImage
+    ? `<div class="tpl-product-shot"><img src="${group.productImage}" alt="${esc(group.label)}" loading="eager" crossorigin="anonymous" onerror="this.parentElement.style.display='none';"></div>`
+    : '';
+
   return `
     <section class="tpl-card tpl-${group.theme}" id="tpl-${group.id}">
       ${group.theme !== 'antam' ? '<div class="tpl-border tpl-border-top" aria-hidden="true"></div>' : ''}
@@ -176,6 +189,7 @@ function buildGroupCardHTML(group, pages) {
         ${showGlowTitle ? `<h2 class="tpl-title-glow">${esc(group.badgeText)}</h2>` : ''}
         ${showScriptTitle ? `<h2 class="tpl-title-script">${esc(group.badgeText)}</h2>` : ''}
         ${tablesHTML}
+        ${productShotHTML}
       </div>
       ${group.theme !== 'antam' ? '<div class="tpl-border tpl-border-bottom" aria-hidden="true"></div>' : ''}
     </section>`;
@@ -250,6 +264,21 @@ document.getElementById('csShare').addEventListener('click', async () => {
    dirender ulang tiap loadCustomer(), jadi listener langsung pada
    tombol akan hilang setelah re-render kalau tidak didelegasikan.
 ═══════════════════════════════════════════════════════ */
+/** Pastikan semua gambar di dalam node sudah selesai dimuat sebelum
+    di-capture — mencegah foto produk/logo yang belum sempat render
+    (terutama saat koneksi lambat) membuat hasil unduhan terlihat
+    kosong/tidak lengkap. */
+function waitForImages(node) {
+  const imgs = Array.from(node.querySelectorAll('img'));
+  return Promise.all(imgs.map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true }); // tetap lanjut walau 1 gambar gagal
+    });
+  }));
+}
+
 async function downloadTemplateImage(groupId, label) {
   if (typeof html2canvas !== 'function') {
     showToast('Fitur unduh gambar belum siap, coba lagi sebentar…');
@@ -261,7 +290,28 @@ async function downloadTemplateImage(groupId, label) {
   if (btn) btn.style.visibility = 'hidden'; // sembunyikan tombol saat pengambilan gambar
   showToast('Menyiapkan gambar ' + label + '…');
   try {
-    const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, logging: false });
+    // Tunggu semua gambar (logo + foto produk) & font selesai dimuat —
+    // ini memperbaiki masalah "data/foto belum lengkap" pada hasil unduhan.
+    await waitForImages(card);
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+    // PENTING: kompensasi posisi scroll halaman. html2canvas secara default
+    // menangkap berdasarkan posisi scroll saat ini — kalau kartu berada di
+    // bawah (sudah di-scroll), tanpa kompensasi ini sebagian konten kartu
+    // bisa terpotong/tidak lengkap di hasil gambar. Ini penyebab utama
+    // laporan "data tidak lengkap saat didownload".
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      imageTimeout: 15000,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
     const link = document.createElement('a');
     const stamp = new Date().toISOString().slice(0, 10);
     const safeLabel = String(label || groupId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
